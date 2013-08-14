@@ -1,0 +1,21 @@
+backend : pdf
+
+axes.labelsize : 14
+
+text.usetex : True
+
+xtick.labelsize : 10
+ytick.labelsize : 10
+
+# width = 3.33 inch, 3.33 *golden_ratio
+figure.figsize : 3.45, 1.75
+
+font.family : serif
+font.serif : Times
+
+legend.labelspacing : 0.25
+legend.fontsize : 10
+legend.numpoints : 1
+
+savefig.bbox : tight
+savefig.pad_inches : 0.01

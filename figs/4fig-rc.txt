@@ -1,0 +1,23 @@
+backend : pdf
+
+axes.labelsize : 8
+
+text.usetex : True
+
+xtick.labelsize : 6
+ytick.labelsize : 6
+
+figure.figsize : 1.8, 1.2
+
+font.family : serif
+font.serif : Times
+
+legend.labelspacing : 0.01
+legend.fontsize : 5
+legend.borderpad : 0.25
+legend.handlelength : 1.5
+legend.handletextpad : 0.4
+legend.numpoints : 1
+
+savefig.bbox : tight
+savefig.pad_inches : 0.01
