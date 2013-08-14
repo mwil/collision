@@ -1,7 +1,7 @@
 collision
 =========
 
-Simulation code for the analysis of concurrent transmission in IEEE 802.15.4 wireless networks.
+Simulation code for the analysis of concurrent transmission in IEEE 802.15.4 wireless networks. This is the accompanying code to the technical report available at http://disco.informatik.uni-kl.de/publications/WLS13.pdf.
 
 Directories:
 - src: Python code for calculating the demodulator output of the receiver
