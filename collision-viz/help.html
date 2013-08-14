@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8"/> 
+      
+    <title>Concurrent Packet Transmissions Visualizer Help Page</title>
+    
+    <meta name="description" content="Help page for the Collision Model visualizer.">
+	<meta name="author" content="Matthias Wilhelm">
+    
+    <script src="src/jquery-1.9.1.min.js"></script>
+    <!-- <script src="help.js"></script> -->
+    <link rel="stylesheet" href="style.css"/>
+</head>
+
+<body>
+
+<h1>How to Use the Visualizer</h1>
+
+<h2>Overview</h2>
+<p>
+	This visualizer shows the resulting packet obtained from a collision of two Minimum Shift Keying (MSK) signals (which represent packets <b>sync</b> and <b>usync</b>) on the wireless channel. Each packet contains four DSSS symbols that carry 4 bits each (symbols 0-15). We use the 32 bit chipping sequences as provided in the IEEE 802.15.4-2006 standard.
+</p>
+<p>
+	One of the signals is perfectly synchronized to the receiver, i.e., it does not suffer from signal impairments. On the other hand the second packet has a relative time offset &tau;, signifying that the second packet may arrive earlier or later, and a carrier phase offset &#981;<sub>c</sub> that is introduced by varying signal paths and local oscillator drifts at this sender. In addition, the power ratio between the signals is variable, i.e., one signal may be stronger than the other.
+</p>
+<p>
+	Both signals collide at their superposition is received by the receiver. The resulting packet at the receiver is labeled with <b>recv</b>. Depending on the signal parameters, our model determines the received chips, and cross-correlates them to determine the symbols received.
+</p>
+
+<h2>Controlling the Packet Content</h2>
+
+<p>
+	<img src="figs/Sync-packet.png" style="border:2px solid black"/>
+
+	There are two options to adjust the packet content, either on the bit (chip) or symbol level. Note that only the upper two packets can be changed, the third packet is the superposition of the other two.
+	<p>
+		On the chip level (in the upper part), bits are signified by rectangles, black means that the bit is 0, white that the bit is 1. By clicking on the rectangle, the corresponding bit is flipped.
+	</p>
+	<p>
+		On the symbols level, symbols can be cycled through by clicking on the symbol label (hexadecimal 0-F), which automatically adjusts to the corresponding chipping sequence. Note that all chips are reset but can be modified again on the chip level.
+	</p>
+	<p>
+		The small number in the lower right corner is the chip error count from the chips set in the bit level to the symbol shown in the symbol level.
+	</p>
+</p>
+
+<p>
+</p>
+
+<h2>Controlling the Model Parameters</h2>
+
+The collision model has several parameters that influence the signal representation of the unsynchronized signal (and in consequence how packet <b>usync</b> is received). All signal parameters can be changed using the input form at the bottom. 
+
+<h3>Signal Power Ratio</h3>
+<p>
+	<img src="figs/ctrl-Power.png" style="float:right; border:2px solid black"/>
+	<p>
+		The power ratio A<sub>u</sub>/A<sub>s</sub> specifies which signal is stronger. A setting of 20dB here means that the unsynchronized packet is 100 times stronger than the synchronized one, resulting in a dominance of the <b>usync</b> packet at the receiver. Values can be in the range of -10dB (the synchronized signal is 10 times stronger) to +50dB.
+	</p>
+		As an example, setting A<sub>u</sub>/A<sub>s</sub> to -10dB results in a reception of the <b>sync</b> packet, while a setting of +20dB results in the reception of the <b>usync</b> packet.
+</p>
+<h3>Carrier Phase Offset</h3>
+<p>
+	<p>
+		<img src="figs/ctrl-Phase.png" style="float:right; border:2px solid black"/>
+		The carrier phase offset &#981;<sub>c</sub> specifies the difference between the reference carrier at the receiver and the carrier phase of the unsynchronized signal. Since the MSK modulation is a phase modulation, such offsets result in bit flips if they are too large.
+	</p>
+	<p>
+		As an example, settings &#981;<sub>c</sub> to 1.0&pi; flips all bits in the received packet.
+</p>
+<h3>Time Offset</h3>
+<p>
+	<img src="figs/ctrl-Time.png" style="float:right; border:2px solid black"/>
+	The relative packet timing &tau; between synchronized and unsynchronized packet can be controlled in the range [-64T;64T], or two DSSS symbol durations, with the control element at the right.
+</p>
+
+</body>
+
+</html>

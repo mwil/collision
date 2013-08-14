@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8"/>
+    
+    <title>Collision Model for IEEE 802.15.4 Wireless Networks v2</title>
+    
+    <link rel="stylesheet" href="style.css"/>
+    
+    <script src="src/jquery-1.9.1.js"></script>
+    
+    <script src="src/DSSS.js"></script>
+    <script src="src/Model.js"></script>
+    
+    <script src="src/Packet.js"></script>
+    
+    <script src="src/paneMain.js"></script>
+    <script src="src/pPacket.js"></script>
+    <script src="src/barChips.js"></script>
+    <script src="src/barSyms.js"></script>
+    
+    <script src="src/UI.js"></script>
+</head>
+
+<body>
+
+<canvas id="CollisionCanvas" width="1024" height="600" class="unselectable">
+	Your browser does not support HTML5 Canvas, which is quite unfortunate.
+</canvas>
+
+<form>
+	<fieldset>
+		Power ratio A<sub>u</sub>/A<sub>s</sub> = 
+		<input id="AuAs" class="range" type="range" min="-10" max="50" step="1" value="20" onChange="$('#AuAs2')[0].value = this.value; UI.update();"/>
+		<input id="AuAs2" class="number" type="number" min="-10" max="50" step="1" value="20" onChange="$('#AuAs')[0].value = this.value; UI.update();"/> dB
+		&nbsp;&nbsp;
+		Carrier phase offset &#981;<sub>c</sub> = 
+		<input id="phi_c" class="range" type="range" min="0" max="2" step="0.1" value="0" onChange="$('#phi_c2')[0].value = this.value; UI.update();"/>
+		<input id="phi_c2" class="number" type="number" min="0" max="2" step="0.1" value="0" onChange="$('#phi_c')[0].value = this.value; UI.update();"/> &pi;
+		&nbsp;&nbsp;
+		Time offset &tau; = 
+		<input id="tau" class="range" type="range" min="-64" max="64" step="0.25" value="0" onChange="$('#tau2')[0].value = this.value; UI.update();"/>
+		<input id="tau2" class="number" type="number" min="-64" max="64" step="0.25" value="0" onChange="$('#tau')[0].value = this.value; UI.update();"/> T
+	</fieldset>
+	
+	<fieldset>
+		<a onClick="window.open('help.html','popUpWindow','height=900,width=820,resizable=yes,dependent=yes,scrollbars=yes')">Help</a>
+	</fieldset>
+</form>
+
+</body>
+
+</html>

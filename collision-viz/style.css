@@ -1,0 +1,41 @@
+html, body {
+  width:  100%;
+  height: 100%;
+  margin: 0px;
+}
+
+canvas {
+	border:1px dotted;
+	margin:0 auto;
+	display: block;
+}
+
+form {
+	float: left;
+	width: 100%;
+	margin:0 auto;
+	display: block;
+}
+
+fieldset { 
+	float: left;
+	
+	display: block;
+}
+
+.range {
+	width: 80px;
+}
+
+.number {
+	width: 40px;
+}
+
+/* http://stackoverflow.com/questions/69430/is-there-a-way-to-make-text-unselectable-on-an-html-page */
+*.unselectable {
+   -moz-user-select: -moz-none;
+   -khtml-user-select: none;
+   -webkit-user-select: none;
+   -ms-user-select: none;
+   user-select: none;
+}
