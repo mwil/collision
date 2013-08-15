@@ -38,10 +38,10 @@ for tau in tau_range:
           
     # symbols of (synch'ed, unsynch'ed) sender
     if content in ('same',):
-        tmp_syms = np.random.randint(15, size=nsyms+2)
+        tmp_syms = np.random.randint(16, size=nsyms+2)
         send_syms = [tmp_syms, tmp_syms]
     else:
-        send_syms = [np.random.randint(15, size=nsyms+2), np.random.randint(15, size=nsyms+2)]
+        send_syms = [np.random.randint(16, size=nsyms+2), np.random.randint(16, size=nsyms+2)]
 
     send_syms_s, send_syms_u = send_syms[0][1:-1], send_syms[1][1:-1]  
     send_chips = map_chips(*send_syms)

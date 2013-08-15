@@ -59,10 +59,10 @@ def gen_n_interf(mode='n'):
 			phi_range = np.random.uniform(-np.pi, np.pi, size=nphi*ninterf).reshape(ninterf, nphi)
 		
 		if content in ('unif',):
-			send_syms = np.random.randint(15, size=(ninterf+1)*(nsyms+2)).reshape(ninterf+1, nsyms+2)
+			send_syms = np.random.randint(16, size=(ninterf+1)*(nsyms+2)).reshape(ninterf+1, nsyms+2)
 		else:
 			# everyone gets the same symbols to send
-			sync_syms = np.random.randint(15, size=nsyms+2)
+			sync_syms = np.random.randint(16, size=nsyms+2)
 			send_syms = np.vstack([sync_syms]*(ninterf+1))
 
 		send_syms_s = send_syms[0][1:-1]
