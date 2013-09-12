@@ -62,7 +62,7 @@ def plot():
     e2 = Ellipse(xy=(2.5, 0.55), width=0.15, height=0.4, angle=-45, fill=False)
     ax.add_artist(e2)
 
-    lgd = plt.legend((l1, l2), (r'One interferer', r'$n$ interferers'), loc='center right', handlelength=0.5)
+    lgd = plt.legend((l2, l1), (r'One interferer', r'$n$ interferers'), loc='center right', handlelength=0.5)
     
     plt.savefig('pdf/ninterf_%s.pdf' % (decision))
     #plt.show()

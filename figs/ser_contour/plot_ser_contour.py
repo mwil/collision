@@ -6,33 +6,44 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
-from settings import *
 
-#mpl.rc_file('3fig-rc.txt')
-mpl.rc_file('../3x2-contour-rc.txt')
+######################################################
+###############    PLOT OPTIONS    ###################
+######################################################
+Au = np.sqrt(1e4)
+
+mode = ('sync', 'usync')[1]
+content = ('same', 'unif')[1]
+decision = ('soft', 'hard')[1]
+######################################################
+######################################################
+
+
+mpl.rc_file('../3fig-rc.txt')
+#mpl.rc_file('../3x2-contour-rc.txt')
 
 def plot():
-    X,Y = np.meshgrid(phi_range, tau_range)
+    data = np.load('data/ser_Au%.2f_%s_%s_v2.npz'%(Au, content, decision))
 
-    mode = ('sync', 'usync')[0]
-    content = ('same', 'unif')[1]
-    decision = ('soft', 'hard')[1]
-
-    Zs = np.load('data/ser_s_Au%.2f_%s_%s.npy'%(Au, content, decision))
-    Zu = np.load('data/ser_u_Au%.2f_%s_%s.npy'%(Au, content, decision))
-
+    Zs = data['SER_S']
+    Zu = data['SER_U']
     Z = (Zu if mode in ('usync',) else Zs)
 
-    print 'DEBUG: If "Inputs x and y must be 1D or 2D." -> Shape mismatch X, Y, Z: ', X.shape, Y.shape, Z.shape
+    tau_range = data['tau_range']
+    phi_range = data['phi_range']
 
-    CSf  = plt.contourf(Y, X/pi, Z, levels=(0.0, 1e-3, 0.25, 0.9, 1.0), colors=('0.0', '0.25', '0.5', '0.95'), origin="lower")
+    PHI, TAU = np.meshgrid(phi_range, tau_range)
+
+    print 'DEBUG: If "Inputs x and y must be 1D or 2D." -> Shape mismatch PHI, TAU, Z: ', PHI.shape, TAU.shape, Z.shape
+
+    CSf  = plt.contourf(TAU, PHI/pi, Z, levels=(0.0, 1e-3, 0.25, 0.9, 1.0), colors=('0.0', '0.25', '0.5', '0.95'), origin="lower")
     CS2 = plt.contour(CSf, levels=(0.9, 0.25, 1e-3), colors=2*('r',)+('w',), linewidths=2*(0.75,)+(1.0,), origin="lower", hold='on')
 
     plt.axis([-1.5, 1.5, -1, 1])
     plt.xlabel(r'Time offset $\tau$ ($/T$)', labelpad=2)
     plt.ylabel(r'Carrier phase offset $\varphi_c$ ($/\pi$)', labelpad=0)
 
-    plt.savefig('pdf/serc2_Au%.2f_%s_%s_%s.pdf'%(Au, mode, content, decision))
+    plt.savefig('pdf/serc_Au%.2f_%s_%s_%s_v2.pdf'%(Au, mode, content, decision))
     #plt.savefig('png/serc2_Au%.2f_%s_%s_%s.png'%(Au, mode, content, decision), dpi=600)
 
 def colorbar_only():
@@ -53,7 +64,7 @@ def colorbar_only():
 
     plt.savefig('pdf/cb.pdf')
 
+######################################################
 if __name__ == '__main__':
 	plot()
 	#colorbar_only()
-

@@ -9,17 +9,16 @@ from matplotlib.font_manager import FontProperties
 
 mpl.rc_file('../3fig-rc.txt')
 
-def plot(sync_file, unsync_file, outfile, loc='', **args):
+tau_range = np.array([0.0, 0.5, 1.0, 1.5])
+
+def plot(data_file, outfile, loc='', kind='', **args):
     '''loc is the location of the plot legend (e.g., "upper right")'''
     
-    for content, decision, zoom in it.product(('unif', 'same'), ('soft', ), (False,)):#(False, True)):
+    for content, decision in it.product(('unif', 'same'), ('hard',)):
         fig = plt.figure()
-        ax = fig.add_subplot(111)
+        ax  = fig.add_subplot(111)
         
-        As_range = (args['As_range_zoom'] if zoom else args['As_range_norm'])
-        tau_range = (args['tau_range_unif'] if content == 'unif' else args['tau_range_same'])
-        
-        if content in ('unif',):    
+        if content in ('unif',): 
             lstyle = it.cycle([a+b for a, b in it.product('rgkc', ('-', '-'))])
             markers = it.cycle('ssoovv^^')
         elif content in ('same',):
@@ -27,16 +26,20 @@ def plot(sync_file, unsync_file, outfile, loc='', **args):
             markers = it.cycle('sov^x')
         
         lines = []
+        
         for tau in tau_range:
-            prr_o = np.load(sync_file%(content, tau, '_zoom' if zoom else '', content, '_'+decision))
-            prr_m = np.load(unsync_file%(content, tau, '_zoom' if zoom else '', content, '_'+decision))
+            data = np.load(data_file%(content, tau, content, ('_'+decision if kind == 'dsss' else '')))
+            As_range  = data['As_range']
+
+            prr_s = data['prr_s']
+            prr_u = data['prr_u']
             
-            line_tmp, = ax.plot(As_range, prr_o, next(lstyle), lw=1)
-            lines.append(ax.plot(As_range[::10], prr_o[::10], ' ', color=line_tmp.get_color(), marker=next(markers))[0])
+            line_tmp, = ax.plot(As_range, prr_s, next(lstyle), lw=1)
+            lines.append(ax.plot(As_range[::10], prr_s[::10], ' ', color=line_tmp.get_color(), marker=next(markers))[0])
             
             if content in ('unif',):
-                ax.plot(As_range, prr_m, next(lstyle), lw=1)
-                ax.plot(As_range[::10], prr_m[::10], ' ', color=line_tmp.get_color(), marker=next(markers), fillstyle='none')
+                ax.plot(As_range, prr_u, next(lstyle), lw=1)
+                ax.plot(As_range[::10], prr_u[::10], ' ', color=line_tmp.get_color(), marker=next(markers), fillstyle='none')
             
         lgd = ax.legend(lines, [r'$%.1fT$'%(t) for t in tau_range], loc=loc)
         lgd.set_title(r'$\tau=$', prop=FontProperties(size=12))
@@ -50,12 +53,10 @@ def plot(sync_file, unsync_file, outfile, loc='', **args):
         ax.grid(axis='y')
         ax.set_xscale('log')
         
-        if not zoom:
-            ax.set_xticklabels(['$-30$', '$-20$', '$-10$', '$0$', '$10$'])
-        else:
-            ax.set_xticklabels(['', 0, 10])
-            ax.set_xticklabels(8*['']+[3, '', 6], minor=True)
-        #plt.yscale('log')
+        ax.set_xticklabels(['', '$-30$', '$-20$', '$-10$', '$0$', '$10$'])
         
-        plt.savefig(outfile%('_zoom' if zoom else '', content, decision))
+        if kind == 'dsss':
+            plt.savefig(outfile%(content, decision))
+        else:
+            plt.savefig(outfile%(content,))
     

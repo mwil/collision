@@ -1,37 +1,33 @@
-import os
 import sys
-
 sys.path.append('../src')
 
 import numpy as np
-from numpy import pi
-from phitau_n import *
-from settings import *
+import phitau_n as ptn
+import phitau_opt as pt
 
-tau = 0.0
+import tools
 
-content = ('same', 'unif')[1]
-decision = ('hard', 'soft')[1]
+######################################################
+#################      SETTINGS      #################
+######################################################
+nphi           = 1500
+num_interferer = 8
 
-#### Query user to enter parameter settings, useful to run scripts in parallel ####
-input_params = (('content', ('same', 'unif'), 'Data content'), ('decision', ('hard', 'soft'), 'Bit decision'))
+settings = {
+    'T':      1.0,
+    'tau':    0.0,
+    'As':     1.0,
+    'Au':	  1./np.sqrt(2),
+    'Au_':	  1./np.sqrt(2),
+    'nsyms':  500,
+    'pktlen': 16,
 
-for var, choices, prompt in input_params:
-	resp = None
-	while resp not in choices:
-		resp = raw_input(prompt+' '+repr(choices) +'? ').lower()
-	globals()[var] = resp
+    'phi_range': np.random.uniform(-np.pi, np.pi, size=nphi)
+}
 
-if os.path.exists('data/ser_s_%s_%s_n.npy'%(content, decision)):
-	print("The file already exists!")
-	resp = None
-
-	while resp not in ('yes', 'no', 'y', 'n'):
-		resp = raw_input('Do you want to continue (y/n)? ').lower()
-
-	if resp not in ('yes', 'y'):
-		exit(0)
-####################################################################################
+globals().update(settings)
+######################################################
+######################################################
 
 def gen_n_interf(mode='n'):
 	'''@param mode: [n] refers to the n interferer mode, we use n low-power interferers with half the power of the sync signal
@@ -53,7 +49,7 @@ def gen_n_interf(mode='n'):
 			Au = Au_
 
 		if ninterf == 0:
-			phi_range = np.repeat(0, nphi).reshape(1, nphi)
+			phi_range = np.zeros(nphi, shape=(1,nphi))
 		else:
 			#phi_range = np.repeat(-pi, nphi*ninterf).reshape(ninterf, nphi)
 			phi_range = np.random.uniform(-np.pi, np.pi, size=nphi*ninterf).reshape(ninterf, nphi)
@@ -66,21 +62,24 @@ def gen_n_interf(mode='n'):
 			send_syms = np.vstack([sync_syms]*(ninterf+1))
 
 		send_syms_s = send_syms[0][1:-1]
-		send_chips = map_chips(*send_syms)
+		send_chips = ptn.map_chips_n(*send_syms)
 	    
-		RECV_CHIPS_I = detect_i(ninterf, send_chips[:2], send_chips[2:], phi_range, tau, As, Au)
-		RECV_CHIPS_Q = detect_q(ninterf, send_chips[:2], send_chips[2:], phi_range, tau, As, Au)
+		RECV_CHIPS_I = ptn.detect_i_n(ninterf, send_chips[:2], send_chips[2:], phi_range, tau, As, Au)
+		RECV_CHIPS_Q = ptn.detect_q_n(ninterf, send_chips[:2], send_chips[2:], phi_range, tau, As, Au)
 
-		for i in xrange(nphi):
-			recv_chips = np.ravel(zip(RECV_CHIPS_I[:,i], RECV_CHIPS_Q[:,i])) 
+		for phi_idx in xrange(nphi):
+			#recv_chips = np.ravel(zip(RECV_CHIPS_I[:,i], RECV_CHIPS_Q[:,i])) 
+			recv_chips = np.zeros(2*RECV_CHIPS_I.shape[0], dtype=np.float)
+			recv_chips[::2]  = RECV_CHIPS_I[:,phi_idx]
+			recv_chips[1::2] = RECV_CHIPS_Q[:,phi_idx]
 
 			# slice bits to simulate hard decision decoder
 			if decision in ('hard',):
 				recv_chips = np.sign(recv_chips)
 
-			recv_syms = detect_syms_corr(recv_chips)[1:-1]
+			recv_syms = pt.detect_syms_corrcoef(recv_chips)[1:-1]
 	        
-			ser_s = np.append(ser_s, sum(recv_syms != send_syms_s) / (1.0*len(recv_syms)))
+			ser_s = np.append(ser_s, np.sum(recv_syms != send_syms_s) / (1.0*len(recv_syms)))
 	    
 		if SER_S is None:
 			SER_S = ser_s
@@ -92,5 +91,11 @@ def gen_n_interf(mode='n'):
 	np.save('data/ser_s_%s_%s_%s.npy'%(content, decision, mode), SER_S)
 
 if __name__ == '__main__':
+	input_params = (('content', ('same', 'unif'), 'Data content'), ('decision', ('hard', 'soft'), 'Bit decision'))
+	content, decision = tools.get_params(input_params)
+
+	if not tools.overwrite_ok('data/ser_s_%s_%s_n.npy'%(content, decision)):
+		sys.exit()
+
 	gen_n_interf(mode='n')
 	gen_n_interf(mode='1')

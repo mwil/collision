@@ -1,25 +1,26 @@
 from numpy import *
-from random import choice
+import numpy as np
 
 T = 1.0
 
-# IEEE 802.15.4 chipping sequences (I/Q as bits, interleaved)
-chips = {0:array([1,1,0,1,1,0,0,1,1,1,0,0,0,0,1,1,0,1,0,1,0,0,1,0,0,0,1,0,1,1,1,0]),
-         8:array([1,0,0,0,1,1,0,0,1,0,0,1,0,1,1,0,0,0,0,0,0,1,1,1,0,1,1,1,1,0,1,1])}
+chips = {0:np.array([1,1,0,1,1,0,0,1,1,1,0,0,0,0,1,1,0,1,0,1,0,0,1,0,0,0,1,0,1,1,1,0]),
+         8:np.array([1,0,0,0,1,1,0,0,1,0,0,1,0,1,1,0,0,0,0,0,0,1,1,1,0,1,1,1,1,0,1,1])}
 
 # building the chipping sequences by shifting ...
 for sym in range(1, 8):
-    chips[sym]   = concatenate((chips[sym-1][-4:], chips[sym-1][:-4]))
-    chips[sym+8] = concatenate((chips[sym+7][-4:], chips[sym+7][:-4]))
+    chips[sym]   = np.concatenate((chips[sym-1][-4:], chips[sym-1][:-4]))
+    chips[sym+8] = np.concatenate((chips[sym+7][-4:], chips[sym+7][:-4]))
     
 # change chips to constellation {0,1} -> {-1,1}
 for sym in chips.keys():
     chips[sym] = 2*chips[sym] - 1
 
 # Remain silent during this symbol (if symbol is given as 'None')
-chips[None] = array([0]*32)
+chips[None] = np.array([0]*32)
 
-def detect_i(ninterf, alpha, beta_n, phi_range_n, tau, As, Au):
+chips_a = np.vstack([chips[i] for i in range(16)])
+
+def detect_i_n(ninterf, alpha, beta_n, phi_range_n, tau, As, Au):
     _tau_ = remainder(tau, 2*T)
     _tau_n_ = remainder(tau+T, 2*T)
     omega_p = pi/(2*T)
@@ -59,7 +60,7 @@ def detect_i(ninterf, alpha, beta_n, phi_range_n, tau, As, Au):
     else:
         return result / ((T/2) * As)
 
-def detect_q(ninterf, alpha, beta_n, phi_range_n, tau, As, Au):
+def detect_q_n(ninterf, alpha, beta_n, phi_range_n, tau, As, Au):
     _tau_ = remainder(tau, 2*T)
     _tau_p_ = remainder(tau-T, 2*T)
     omega_p = pi/(2*T)
@@ -100,7 +101,7 @@ def detect_q(ninterf, alpha, beta_n, phi_range_n, tau, As, Au):
     else:
         return result / ((T/2) * As)
 
-def map_chips(vsyms, *args):
+def map_chips_n(vsyms, *args):
     chips_i, chips_q = {}, {}
     
     # Split chipping sequences in I and Q
@@ -125,70 +126,4 @@ def map_chips(vsyms, *args):
         result = vstack([result, array([beta_i, beta_q])])
         
     return result
-    
-def channel(alpha, beta, phi_range, tau, As, Au):
-    RECV_CHIPS_I = detect_i(alpha, beta, phi_range, tau, As, Au)
-    RECV_CHIPS_Q = detect_q(alpha, beta, phi_range, tau, As, Au)
-
-    # return received chipping sequence with alternating I/Q chips for correlation ([i0, q0, i1, q1, ...])
-    i = 0 # choose a phi_c value from the matrix
-    recv_chips = sign(ravel(zip(RECV_CHIPS_I[:,i], RECV_CHIPS_Q[:,i])))
-    
-    return recv_chips
-
-def detect_syms_corr(recv_chips, **args):
-    recv_syms = array([], dtype=int32)
-    
-    # Choose the symbol with the highest correlation value
-    while len(recv_chips) > 0:
-        curr_chips = recv_chips[:32]
-        best_syms  = []
-        best_corr  = 0
-        
-        for sym in chips.iterkeys():
-            curr_corr, = abs(correlate(chips[sym], curr_chips))
-            
-            if curr_corr > best_corr:
-                best_syms  = [sym]
-                best_corr  = curr_corr
-            elif curr_corr == best_corr:
-                best_syms.append(sym)
-                
-        # all values with the same correlation could be detected, just choose one ...
-        recv_syms = append(recv_syms, choice(best_syms))
-        recv_chips = recv_chips[32:]
-    
-    return recv_syms
-    
-def detect_syms_cerr(recv_chips, **args):
-    recv_syms = array([], dtype=int32)
-    
-    # Choose the symbol with the lowest number of chip errors
-    while len(recv_chips) > 0:
-        curr_chips = recv_chips[:32]
-        best_sym   = 0
-        best_cerr  = 33
-        
-        for sym in chips:
-            if not sym: continue
-            curr_cerr = sum(chips[sym][1:] != curr_chips[1:])
-            
-            if curr_cerr < best_cerr:
-                best_sym  = sym
-                best_cerr  = curr_cerr
-        
-        recv_syms = append(recv_syms, best_sym)
-        recv_chips = recv_chips[32:]
-        
-    return recv_syms
-
-if __name__ == "__main__":
-    alpha = array([[-1, 1, -1, 1, -1, -1], [1, 1, -1, -1, -1, 1]])  # (I,Q)
-    beta = array([[-1, 1, -1, 1, 1, -1], [-1, -1, -1, 1, -1, 1]])  # (I,Q)
-    phi_range = arange(-pi, pi, pi / 2)
-
-    res = detect_i(alpha, beta, phi_range, -6.0, 1.0, 10.0)
-    #res = detect_q(alpha, beta, phi_range, -6.0, 1.0, 10.0)
-    
-    set_printoptions(threshold=NaN, precision=3, suppress=True)
-    print res[:,-1]
+ 

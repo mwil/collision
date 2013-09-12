@@ -1,3 +1,4 @@
+import os
 import sys
 
 def get_params(input_params):
@@ -9,7 +10,9 @@ def get_params(input_params):
             resp = raw_input(prompt+' '+repr(choices) +'? ').lower()
         params.append(resp)
 
-def check_overwrite(filepath):
+    return params
+
+def overwrite_ok(filepath):
     # Since the computations are quite long, make sure that existing results should really be deleted!
     if os.path.exists(filepath):
         print("The file already exists!")
@@ -19,9 +22,9 @@ def check_overwrite(filepath):
             resp = raw_input('Do you want to continue (y/n)? ').lower()
                         
         if resp not in ('yes', 'y'):
-            return True
+            return False
 
-    return False
+    return True
 
 def osx_notify():
     try:
