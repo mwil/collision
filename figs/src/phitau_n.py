@@ -1,4 +1,3 @@
-from numpy import *
 import numpy as np
 
 T = 1.0
@@ -21,39 +20,40 @@ chips[None] = np.array([0]*32)
 chips_a = np.vstack([chips[i] for i in range(16)])
 
 def detect_i_n(ninterf, alpha, beta_n, phi_range_n, tau, As, Au):
-    _tau_ = remainder(tau, 2*T)
-    _tau_n_ = remainder(tau+T, 2*T)
-    omega_p = pi/(2*T)
-    phi_p = omega_p * tau
+    _tau_   = np.remainder(tau, 2*T)
+    _tau_n_ = np.remainder(tau+T, 2*T)
+    omega_p = np.pi/(2*T)
+    phi_p   = omega_p * tau
     
-    k_tau = int(floor(tau / (2*T)))
-    k_tau_n = int(floor((tau+T) / (2*T)))
+    k_tau   = np.int(np.floor(tau / (2*T)))
+    k_tau_n = np.int(np.floor((tau+T) / (2*T)))
 
-    _, ALPHA = meshgrid(phi_range_n[0], alpha[0])
+    _, ALPHA = np.meshgrid(phi_range_n[0], alpha[0])
 
     result = (T/2) * ALPHA * As
 
     for interf in range(ninterf):
         phi_range = phi_range_n[interf]
-        PHI_C, _ = meshgrid(phi_range, alpha[0])
+        PHI_C, _  = np.meshgrid(phi_range, alpha[0])
 
         beta = beta_n[2*interf:(2*interf)+2]
-        beta_i, beta_q = concatenate((beta[0], zeros(max(1, 2*abs(k_tau))))), concatenate((beta[1], zeros(max(1, 2*abs(k_tau_n)))))
+        beta_i = np.concatenate((beta[0], np.zeros(np.max(1, 2*np.abs(k_tau)))))
+        beta_q = np.concatenate((beta[1], np.zeros(np.max(1, 2*np.abs(k_tau_n))))) 
+
+        bkn_i = np.roll(beta_i, k_tau + 1)[:len(alpha[0])]
+        bk_i  = np.roll(beta_i, k_tau)[:len(alpha[0])]
+        bkn_q = np.roll(beta_q, k_tau_n + 1)[:len(alpha[1])]
+        bk_q  = np.roll(beta_q, k_tau_n)[:len(alpha[1])]
         
-        bkn_i = roll(beta_i, k_tau + 1)[:len(alpha[0])]
-        bk_i = roll(beta_i, k_tau)[:len(alpha[0])]
-        bkn_q = roll(beta_q, k_tau_n + 1)[:len(alpha[1])]
-        bk_q = roll(beta_q, k_tau_n)[:len(alpha[1])]
+        arg1 = np.cos(phi_p) * (_tau_ * bkn_i + (2*T - _tau_) * bk_i)
+        arg2 = ((2*T) / pi) * np.sin(phi_p) * (bkn_i - bk_i)
+        arg3 = np.sin(phi_p) * (_tau_n_ * bkn_q + (2*T - _tau_n_) * bk_q)
+        arg4 = ((2*T) / pi) * np.cos(phi_p) * (bkn_q - bk_q)
         
-        arg1 = cos(phi_p) * (_tau_ * bkn_i + (2*T - _tau_) * bk_i)
-        arg2 = ((2*T) / pi) * sin(phi_p) * (bkn_i - bk_i)
-        arg3 = sin(phi_p) * (_tau_n_ * bkn_q + (2*T - _tau_n_) * bk_q)
-        arg4 = ((2*T) / pi) * cos(phi_p) * (bkn_q - bk_q)
+        _, ARG12 = np.meshgrid(phi_range, (arg1 - arg2))
+        _, ARG34 = np.meshgrid(phi_range, (arg3 + arg4))    
         
-        _, ARG12 = meshgrid(phi_range, (arg1 - arg2))
-        _, ARG34 = meshgrid(phi_range, (arg3 + arg4))    
-        
-        result += (Au/4.0) * (cos(PHI_C) * ARG12 - sin(PHI_C) * ARG34)
+        result += (Au/4.0) * (np.cos(PHI_C) * ARG12 - np.sin(PHI_C) * ARG34)
     
     if Au > 0 and ninterf != 0:
         return result / ((T/2) * As * Au)
@@ -61,40 +61,41 @@ def detect_i_n(ninterf, alpha, beta_n, phi_range_n, tau, As, Au):
         return result / ((T/2) * As)
 
 def detect_q_n(ninterf, alpha, beta_n, phi_range_n, tau, As, Au):
-    _tau_ = remainder(tau, 2*T)
-    _tau_p_ = remainder(tau-T, 2*T)
-    omega_p = pi/(2*T)
-    phi_p = omega_p * tau
+    _tau_   = np.remainder(tau, 2*T)
+    _tau_p_ = np.remainder(tau-T, 2*T)
+    omega_p = np.pi/(2*T)
+    phi_p   = omega_p * tau
 
-    k_tau = int(floor(tau / (2*T)))
-    k_tau_p = int(floor((tau-T) / (2*T)))
+    k_tau   = np.int(np.floor(tau / (2*T)))
+    k_tau_p = np.int(np.floor((tau-T) / (2*T)))
 
-    _, ALPHA = meshgrid(phi_range_n[0], alpha[1])
+    _, ALPHA = np.meshgrid(phi_range_n[0], alpha[1])
     
     result = (T/2) * ALPHA * As
     
     for interf in range(ninterf):
         phi_range = phi_range_n[interf]
-        PHI_C, _ = meshgrid(phi_range, alpha[1])
+        PHI_C, _  = np.meshgrid(phi_range, alpha[1])
 
         beta = beta_n[2*interf:(2*interf)+2]
         # fill negative indices with zeros
-        beta_i, beta_q = concatenate((beta[0], zeros(max(1, 2*abs(k_tau_p))))), concatenate((beta[1], zeros(max(1, 2 * abs(k_tau)))))
+        beta_i = np.concatenate((beta[0], np.zeros(np.max(1, 2*np.abs(k_tau_p)))))
+        beta_q = np.concatenate((beta[1], np.zeros(np.max(1, 2*np.abs(k_tau)))))
         
-        bkn_i = roll(beta_i, k_tau_p + 1)[:len(alpha[0])]
-        bk_i = roll(beta_i, k_tau_p)[:len(alpha[0])]
-        bkn_q = roll(beta_q, k_tau + 1)[:len(alpha[1])]
-        bk_q = roll(beta_q, k_tau)[:len(alpha[1])]
+        bkn_i = np.roll(beta_i, k_tau_p + 1)[:len(alpha[0])]
+        bk_i  = np.roll(beta_i, k_tau_p)[:len(alpha[0])]
+        bkn_q = np.roll(beta_q, k_tau + 1)[:len(alpha[1])]
+        bk_q  = np.roll(beta_q, k_tau)[:len(alpha[1])]
         
-        arg1 = cos(phi_p) * (_tau_ * bkn_q + (2*T - _tau_) * bk_q)
-        arg2 = ((2*T) / pi) * sin(phi_p) * (bkn_q - bk_q)
-        arg3 = sin(phi_p) * (_tau_p_ * bkn_i + (2*T - _tau_p_) * bk_i)
-        arg4 = ((2*T) / pi) * cos(phi_p) * (bkn_i - bk_i)
+        arg1 = np.cos(phi_p) * (_tau_ * bkn_q + (2*T - _tau_) * bk_q)
+        arg2 = ((2*T) / pi) * np.sin(phi_p) * (bkn_q - bk_q)
+        arg3 = np.sin(phi_p) * (_tau_p_ * bkn_i + (2*T - _tau_p_) * bk_i)
+        arg4 = ((2*T) / pi) * np.cos(phi_p) * (bkn_i - bk_i)
         
-        _, ARG12 = meshgrid(phi_range, (arg1 - arg2))
-        _, ARG34 = meshgrid(phi_range, (arg3 + arg4))
+        _, ARG12 = np.meshgrid(phi_range, (arg1 - arg2))
+        _, ARG34 = np.meshgrid(phi_range, (arg3 + arg4))
         
-        result += (Au/4.0) * (cos(PHI_C) * ARG12 - sin(PHI_C) * ARG34)
+        result += (Au/4.0) * (np.cos(PHI_C) * ARG12 - np.sin(PHI_C) * ARG34)
     
     if Au > 0 and ninterf != 0:
         return result / ((T/2) * As * Au * ninterf)
@@ -109,15 +110,15 @@ def map_chips_n(vsyms, *args):
         chips_i[sym] = chips[sym][::2]
         chips_q[sym] = chips[sym][1::2]
     
-    alpha_i, alpha_q = array([], dtype=int32), array([], dtype=int32)
+    alpha_i, alpha_q = np.array([], dtype=np.int), np.array([], dtype=np.int)
     for vsym in vsyms:
-        alpha_i = concatenate((alpha_i, chips_i[vsym]))
-        alpha_q = concatenate((alpha_q, chips_q[vsym]))
+        alpha_i = np.concatenate((alpha_i, chips_i[vsym]))
+        alpha_q = np.concatenate((alpha_q, chips_q[vsym]))
 
-    result = array([alpha_i, alpha_q])
+    result = np.array([alpha_i, alpha_q])
     
     for asyms in args:
-        beta_i, beta_q = array([], dtype=int32), array([], dtype=int32)
+        beta_i, beta_q = np.array([], dtype=np.int), np.array([], dtype=np.int)
     
         for asym in asyms:
             beta_i = concatenate((beta_i, chips_i[asym]))

@@ -49,7 +49,7 @@ def gen_n_interf(mode='n'):
 			Au = Au_
 
 		if ninterf == 0:
-			phi_range = np.zeros(nphi, shape=(1,nphi))
+			phi_range = np.zeros((1,nphi), dtype=np.float)
 		else:
 			#phi_range = np.repeat(-pi, nphi*ninterf).reshape(ninterf, nphi)
 			phi_range = np.random.uniform(-np.pi, np.pi, size=nphi*ninterf).reshape(ninterf, nphi)
