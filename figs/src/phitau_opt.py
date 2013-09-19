@@ -1,6 +1,3 @@
-import random
-
-#from numpy import *
 import numpy as np
 
 T = 1.0
@@ -24,17 +21,18 @@ chips[None] = np.array([0]*32)
 chips_a = np.vstack([chips[i] for i in range(16)])
 
 def detect_i(alpha, beta, phi_range, tau, As, Au):
-    _tau_ = np.remainder(tau, 2*T)
+    _tau_   = np.remainder(tau, 2*T)
     _tau_n_ = np.remainder(tau+T, 2*T)
     omega_p = np.pi/(2*T)
-    phi_p = omega_p * tau
+    phi_p   = omega_p * tau
     
-    k_tau = int(np.floor(tau / (2*T)))
+    k_tau   = int(np.floor(tau / (2*T)))
     k_tau_n = int(np.floor((tau+T) / (2*T)))
         
     # fill negative indices with np.zeros (FIXED: k=0 also needs one zero at position -1!)
-    beta_i, beta_q = np.concatenate((beta[0], np.zeros(max(1, 2*abs(k_tau))))), np.concatenate((beta[1], np.zeros(max(1, 2*abs(k_tau_n)))))
-    
+    beta_i = np.concatenate((beta[0], np.zeros(max(1, 2*abs(k_tau)))))
+    beta_q = np.concatenate((beta[1], np.zeros(max(1, 2*abs(k_tau_n)))))
+
     bkn_i = np.roll(beta_i, k_tau + 1)[:len(alpha[0])]
     bk_i  = np.roll(beta_i, k_tau)[:len(alpha[0])]
     bkn_q = np.roll(beta_q, k_tau_n + 1)[:len(alpha[0])]
@@ -60,21 +58,22 @@ def detect_i(alpha, beta, phi_range, tau, As, Au):
         return result / ((T/2) * Au)
 
 def detect_q(alpha, beta, phi_range, tau, As, Au):
-    _tau_ = np.remainder(tau, 2*T)
+    _tau_   = np.remainder(tau, 2*T)
     _tau_p_ = np.remainder(tau-T, 2*T)
     omega_p = np.pi/(2*T)
-    phi_p = omega_p * tau
+    phi_p   = omega_p * tau
 
-    k_tau = int(np.floor(tau / (2*T)))
+    k_tau   = int(np.floor(tau / (2*T)))
     k_tau_p = int(np.floor((tau-T) / (2*T)))
     
     # fill negative indices with np.zeros
-    beta_i, beta_q = np.concatenate((beta[0], np.zeros(max(1, 2*abs(k_tau_p))))), np.concatenate((beta[1], np.zeros(max(1, 2 * abs(k_tau)))))
+    beta_i = np.concatenate((beta[0], np.zeros(max(1, 2*abs(k_tau_p)))))
+    beta_q = np.concatenate((beta[1], np.zeros(max(1, 2 * abs(k_tau)))))
     
     bkn_i = np.roll(beta_i, k_tau_p + 1)[:len(alpha[0])]
-    bk_i = np.roll(beta_i, k_tau_p)[:len(alpha[0])]
+    bk_i  = np.roll(beta_i, k_tau_p)[:len(alpha[0])]
     bkn_q = np.roll(beta_q, k_tau + 1)[:len(alpha[0])]
-    bk_q = np.roll(beta_q, k_tau)[:len(alpha[0])]
+    bk_q  = np.roll(beta_q, k_tau)[:len(alpha[0])]
     
     arg1 = np.cos(phi_p) * (_tau_ * bkn_q + (2*T - _tau_) * bk_q)
     arg2 = ((2*T) / np.pi) * np.sin(phi_p) * (bkn_q - bk_q)
@@ -146,7 +145,7 @@ def detect_syms_corr(recv_chips, **args):
                 best_syms.append(sym)
                 
         # all values with the same correlation could be detected, just choose one ...
-        recv_syms = np.append(recv_syms, random.choice(best_syms))
+        recv_syms = np.append(recv_syms, np.random.choice(best_syms))
     
     return recv_syms
 
@@ -161,7 +160,7 @@ def detect_syms_corrcoef(recv_chips, **args):
         best_syms,  = np.where(corr_matrix >= np.max(corr_matrix))
                 
         # all values with the same correlation could be detected, just choose one ...
-        recv_syms = np.append(recv_syms, random.choice(best_syms))
+        recv_syms = np.append(recv_syms, np.random.choice(best_syms))
     
     return recv_syms
 
@@ -190,14 +189,14 @@ def detect_syms_cerr(recv_chips, **args):
     return recv_syms
 
 if __name__ == "__main__":
-    alpha = array([[-1, 1, -1, 1, -1, -1], [1, 1, -1, -1, -1, 1]])  # (I,Q)
-    beta = array([[-1, 1, -1, 1, 1, -1], [-1, -1, -1, 1, -1, 1]])  # (I,Q)
-    phi_range = arange(-np.pi, np.pi, np.pi / 2)
+    alpha = np.array([[-1, 1, -1, 1, -1, -1], [ 1,  1, -1, -1, -1, 1]])  # (I,Q)
+    beta  = np.array([[-1, 1, -1, 1,  1, -1], [-1, -1, -1,  1, -1, 1]])  # (I,Q)
+    phi_range = np.arange(-np.pi, np.pi, np.pi / 2)
 
     res = detect_i(alpha, beta, phi_range, -6.0, 1.0, 10.0)
     #res = detect_q(alpha, beta, phi_range, -6.0, 1.0, 10.0)
     
-    set_printoptions(threshold=NaN, precision=3, suppress=True)
+    np.set_printoptions(threshold=np.NaN, precision=2, suppress=True, linewidth=180)
     print res[:,-1]
 
     asyms = [1,2,3]
@@ -206,7 +205,7 @@ if __name__ == "__main__":
     send_chips = map_chips(asyms, vsyms)
     recv_chips = channel(send_chips[:2], send_chips[2:], phi_range=[np.pi/2], tau=0.0, As=1.0, Au=100.0)
 
-    for i in range(1000):
+    for i in xrange(1000):
         recv_syms = detect_syms_corrcoef(recv_chips)
 
     print recv_syms
