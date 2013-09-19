@@ -3,6 +3,10 @@
 # C extensions
 *.so
 
+# generated files
+*.pdf
+*.np[yz]
+
 # Packages
 *.egg
 *.egg-info
