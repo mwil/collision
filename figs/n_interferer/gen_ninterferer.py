@@ -19,7 +19,7 @@ settings = {
     'As':     1.0,
     'Au':	  1./np.sqrt(2),
     'Au_':	  1./np.sqrt(2),
-    'nsyms':  500,
+    'nsyms':  1000,
     'pktlen': 16,
 
     'phi_range': np.random.uniform(-np.pi, np.pi, size=nphi)

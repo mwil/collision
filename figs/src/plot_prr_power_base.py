@@ -14,7 +14,7 @@ tau_range = np.array([0.0, 0.5, 1.0, 1.5])
 def plot(data_file, outfile, loc='', kind='', **args):
     '''loc is the location of the plot legend (e.g., "upper right")'''
     
-    for content, decision in it.product(('unif', 'same'), ('hard',)):
+    for content, decision in it.product(('unif', 'same'), ('soft',)):
         fig = plt.figure()
         ax  = fig.add_subplot(111)
         
