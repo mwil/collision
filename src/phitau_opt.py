@@ -11,16 +11,31 @@ for sym in range(1, 8):
     chips[sym]   = np.concatenate((chips[sym-1][-4:], chips[sym-1][:-4]))
     chips[sym+8] = np.concatenate((chips[sym+7][-4:], chips[sym+7][:-4]))
     
-# change chips to constellation {0,1} -> {-1,1}
+# convert chips to constellation points {0,1} -> {-1,1}
 for sym in chips.keys():
     chips[sym] = 2*chips[sym] - 1
 
-# Remain silent during this symbol (if symbol is given as 'None')
+# Additional chipping sequence to remain silent during this symbol (if symbol is given as 'None')
 chips[None] = np.array([0]*32)
 
 chips_a = np.vstack([chips[i] for i in range(16)])
 
 def detect_i(alpha, beta, phi_range, tau, As, Au):
+    '''Calculate the in-phase demodulation output for two colliding MSK signals s(t) and u(t).
+
+    This function implements Eq. 9 in the technical report for two signals and a noiseless channel.
+
+    Args:
+        alpha (2d np.array [I/Q][chips]): IQ bits/chips sent by the synchronized sender S. (Example: np.array([[-1, 1, -1], [1, 1, -1]]))
+        beta  (2d np.array [I/Q][chips]): IQ bits/chips sent by the interfering sender U. (See alpha)
+        phi_range (1d np.array): Carrier phase offsets of the interfering sender. (Example: np.arange(-np.pi, np.pi, num=10))
+        tau: Time offset between s(t) and u(t). (Example: 2*T)
+        As: Signal amplitude of s(t). 
+        Au: Signal amplitude of u(t).
+
+    Returns:
+        Scaled soft bit \hat{o}^I_k with values in [-1,1].
+    '''
     _tau_   = np.remainder(tau, 2*T)
     _tau_n_ = np.remainder(tau+T, 2*T)
     omega_p = np.pi/(2*T)
@@ -58,6 +73,10 @@ def detect_i(alpha, beta, phi_range, tau, As, Au):
         return result / ((T/2) * Au)
 
 def detect_q(alpha, beta, phi_range, tau, As, Au):
+    '''Calculate the quadrature-phase demodulation output for two colliding MSK signals s(t) and u(t).
+
+    See detect_i for details, this function yields results for \hat{o}^Q_k.
+    '''
     _tau_   = np.remainder(tau, 2*T)
     _tau_p_ = np.remainder(tau-T, 2*T)
     omega_p = np.pi/(2*T)
@@ -94,7 +113,17 @@ def detect_q(alpha, beta, phi_range, tau, As, Au):
         return result / ((T/2) * Au)
 
 
-def map_chips(vsyms, asyms):
+def map_chips(syncsyms, usyms):
+    '''Map 4 bit symbols to 32 bit chipping sequences.
+
+    Args:
+        syncsyms: Symbols of the synchronized sender.
+        usyms: Symbols of the interferer.
+
+    Returns:
+        2d nparray of in- and quadrature-phase chips from the 2.4 GHz PHY of IEEE 802.15.4 for both
+        the synchronized sender (alpha) and the interferer (beta).
+    '''
     chips_i, chips_q = {}, {}
     
     # Split chipping sequences in I and Q
@@ -103,15 +132,15 @@ def map_chips(vsyms, asyms):
         chips_q[sym] = chips[sym][1::2]
     
     alpha_i, alpha_q = np.array([], dtype=np.int), np.array([], dtype=np.int)
-    beta_i, beta_q   = np.array([], dtype=np.int), np.array([], dtype=np.int)
+    beta_i,  beta_q  = np.array([], dtype=np.int), np.array([], dtype=np.int)
     
     # map symbols to chips
-    for vsym in vsyms:
-        alpha_i = np.concatenate((alpha_i, chips_i[vsym]))
-        alpha_q = np.concatenate((alpha_q, chips_q[vsym]))
-    for asym in asyms:
-        beta_i = np.concatenate((beta_i, chips_i[asym]))
-        beta_q = np.concatenate((beta_q, chips_q[asym]))
+    for sysym in syncsyms:
+        alpha_i = np.concatenate((alpha_i, chips_i[sysym]))
+        alpha_q = np.concatenate((alpha_q, chips_q[sysym]))
+    for usym in usyms:
+        beta_i = np.concatenate((beta_i, chips_i[usym]))
+        beta_q = np.concatenate((beta_q, chips_q[usym]))
         
     return np.array([alpha_i, alpha_q, beta_i, beta_q])
     
@@ -120,13 +149,15 @@ def channel(alpha, beta, phi_range, tau, As, Au):
     RECV_CHIPS_Q = detect_q(alpha, beta, phi_range, tau, As, Au)
 
     # return received chipping sequence with alternating I/Q chips for correlation ([i0, q0, i1, q1, ...])
-    i = 0 # choose a phi_c value from the matrix
-    #recv_chips = sign(ravel(zip(RECV_CHIPS_I[:,i], RECV_CHIPS_Q[:,i])))
-    recv_chips = np.ravel(zip(RECV_CHIPS_I[:,i], RECV_CHIPS_Q[:,i]))
+    phi_idx = 0 # choose a phi_c value from the matrix
+
+    recv_chips = np.zeros(2*RECV_CHIPS_I.shape[0], dtype=np.float)
+    recv_chips[ ::2] = RECV_CHIPS_I[:,phi_idx]
+    recv_chips[1::2] = RECV_CHIPS_Q[:,phi_idx]
     
     return recv_chips
 
-def detect_syms_corr(recv_chips, **args):
+def detect_syms_corr(recv_chips):
     recv_syms = np.array([], dtype=np.int)
     
     # Choose the symbol with the highest correlation value
@@ -149,7 +180,17 @@ def detect_syms_corr(recv_chips, **args):
     
     return recv_syms
 
-def detect_syms_corrcoef(recv_chips, **args):
+def detect_syms_corrcoef(recv_chips):
+    '''Find the symbols with the highest correlation to the received input chips.
+
+    Implements Eq. 10 in the technical report. Should provide a speedup by using the np.corrcoef function, but doesn't.
+
+    Args:
+        recv_chips: Interleaved (soft) bits detected.
+
+    Returns:
+        A sequence of symbols that provide the best correlation to the input bit sequence.
+    '''
     recv_syms = np.array([], dtype=np.int)
     
     # Choose the symbol with the highest correlation value
@@ -163,11 +204,9 @@ def detect_syms_corrcoef(recv_chips, **args):
         recv_syms = np.append(recv_syms, np.random.choice(best_syms))
     
     return recv_syms
-
-#detect_syms_corr = detect_syms_corrcoef
     
-def detect_syms_cerr(recv_chips, **args):
-    recv_syms = array([], dtype=np.int)
+def detect_syms_cerr(recv_chips):
+    recv_syms = np.array([], dtype=np.int)
     
     # Choose the symbol with the lowest number of chip errors
     while len(recv_chips) > 0:
@@ -177,13 +216,13 @@ def detect_syms_cerr(recv_chips, **args):
         
         for sym in chips:
             if not sym: continue
-            curr_cerr = sum(chips[sym][1:] != curr_chips[1:])
+            curr_cerr = np.sum(chips[sym][1:] != curr_chips[1:])
             
             if curr_cerr < best_cerr:
                 best_sym  = sym
                 best_cerr  = curr_cerr
         
-        recv_syms = append(recv_syms, best_sym)
+        recv_syms = np.append(recv_syms, best_sym)
         recv_chips = recv_chips[32:]
         
     return recv_syms
@@ -191,7 +230,7 @@ def detect_syms_cerr(recv_chips, **args):
 if __name__ == "__main__":
     alpha = np.array([[-1, 1, -1, 1, -1, -1], [ 1,  1, -1, -1, -1, 1]])  # (I,Q)
     beta  = np.array([[-1, 1, -1, 1,  1, -1], [-1, -1, -1,  1, -1, 1]])  # (I,Q)
-    phi_range = np.arange(-np.pi, np.pi, np.pi / 2)
+    phi_range = np.arange(-np.pi, np.pi, np.pi/2)
 
     res = detect_i(alpha, beta, phi_range, -6.0, 1.0, 10.0)
     #res = detect_q(alpha, beta, phi_range, -6.0, 1.0, 10.0)
@@ -199,10 +238,10 @@ if __name__ == "__main__":
     np.set_printoptions(threshold=np.NaN, precision=2, suppress=True, linewidth=180)
     print res[:,-1]
 
-    asyms = [1,2,3]
-    vsyms = [4,5,6]
+    usyms = [1,2,3]
+    syncsyms = [4,5,6]
 
-    send_chips = map_chips(asyms, vsyms)
+    send_chips = map_chips(usyms, syncsyms)
     recv_chips = channel(send_chips[:2], send_chips[2:], phi_range=[np.pi/2], tau=0.0, As=1.0, Au=100.0)
 
     for i in xrange(1000):
