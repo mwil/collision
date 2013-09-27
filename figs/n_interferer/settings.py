@@ -13,24 +13,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-backend : pdf
+# settings for the data generation of the contour plot
 
-axes.labelsize : 14
+import numpy as np
 
-text.usetex : True
+T = 1.
+As = 1.0
+Au  = 1/np.sqrt(2)
+Au_ = 1/np.sqrt(2)
 
-xtick.labelsize : 10
-ytick.labelsize : 10
+nsyms = 500
+nphi  = 2500
+pktlen = 16
 
-# width = 3.33 inch, 3.33 *golden_ratio
-figure.figsize : 3.45, 1.75
+num_interferer = 8
 
-font.family : serif
-font.serif : Times
-
-legend.labelspacing : 0.25
-legend.fontsize : 10
-legend.numpoints : 1
-
-savefig.bbox : tight
-savefig.pad_inches : 0.01
+phi_range = np.random.uniform(-np.pi, np.pi, size=nphi)
