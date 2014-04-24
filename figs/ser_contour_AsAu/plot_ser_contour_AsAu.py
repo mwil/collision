@@ -1,24 +1,10 @@
-# Copyright 2013 Matthias Wilhelm
-
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import itertools as it
 
 mpl.rc_file('../3fig-contour-rc.txt')
+
 
 def plot(mode, content, decision, wide):
     dat_sc = np.load('data/prr_AsAu_%s_%s%s.npz'%(content, decision, wide))
@@ -35,15 +21,22 @@ def plot(mode, content, decision, wide):
 
     AU, TAU = np.meshgrid(Au_range_dB, tau_range)
 
+    # make adjustments for unif/sync/_wide
+    if AU.shape == (251, 227):
+        Zs_bc = np.vstack((Zs_bc, np.zeros((1,250))))
+        Zs_bc = Zs_bc[:,:227]
+
     plt.clf()
 
     print 'DEBUG: If "Inputs x and y must be 1D or 2D." -> Shape mismatch TAU, AU, Zu: ', TAU.shape, AU.shape, Zs.shape#, Zs_bc.shape
 
     # version for sync, same, hard
-    CSf = plt.contourf(TAU, -AU, Z, levels=(0.0, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0), colors=('1.0', '0.75', '0.5', '0.25', '0.15', '0.0'), origin="lower")
-    CS2 = plt.contour(CSf,  colors = ('r',)*5+('w',), linewidths=(0.75,)*5+(1.0,), origin="lower", hold='on')
+    CSf = plt.contourf(TAU, -AU, Z, levels=(0.0, 0.1, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0), colors=('1.0', '0.85', '0.75', '0.65', '0.5', '0.35', '0.0'), origin="lower")
+    CS2 = plt.contour(CSf,  colors = ('r',)*6+('w',), linewidths=(0.75,)*6+(1.0,), origin="lower", hold='on')
     #CS_bc = plt.contour(TAU, -AU, Z_bc, levels=(0.9,), colors='w', origin='lower', hold='on')
-    CS_bc  = plt.contour(TAU, -AU, Zs_bc, linewidths=1.0, levels=(0.9, 1.0), colors='0.0', origin='lower', hold='on')
+    
+    # adjust color for sync/usync figures
+    CS_bc  = plt.contour(TAU, -AU, Zs_bc, linewidths=1.0, levels=(0.9, 1.0), colors='1.0', origin='lower', hold='on')
 
     #cb  = plt.colorbar(CSf)
 
@@ -53,9 +46,9 @@ def plot(mode, content, decision, wide):
         _plot_sync(content, decision, wide)
 
     if wide:
-        plt.axis([-4.0, 4.0, -max(Au_range_dB), -min(Au_range_dB)])
+        plt.axis([-4.0, 4.0, -13, 3])
     else:
-        plt.axis([-1.5, 1.5, -max(Au_range_dB), -min(Au_range_dB)])
+        plt.axis([-1.5, 1.5, -50, 10])
 
     plt.xlabel(r'Time offset $\tau$ ($/T$)', labelpad=2)
     plt.ylabel(r'Signal power ratio ($\mathrm{SIR}$)', labelpad=0)
@@ -93,26 +86,28 @@ def _plot_usync(content, decision, wide):
         #CSf_bc = plt.contourf(TAU, -AU, Zs, levels=(0.6, 0.8, 0.9, 1.0), colors=('0.25', '0.15', '0.0'), origin="lower")
         #CS_bc  = plt.contour(TAU,  -AU, Zs_bc, linewidths=1.0, levels=(0.9, 1.0), colors='0.0', origin='lower', hold='on')
 
+        # switch colors for both text and arrow here (0<->1) for sync/usync figures!
         plt.annotate(r'$\delta_\mathrm{SIR}$', xy=(-0.25, 0.75), xytext=(-1.25, 3.25), color='0.0', fontsize=10, # xtext=2.5, 1.25
             arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=-0.2', color='0.0'))
     else:
-        pass
+        plt.annotate(r'$\delta_\mathrm{SIR}$', xy=(-0.25, 0.75), xytext=(-1.25, 3.25), color='1.0', fontsize=10, # xtext=2.5, 1.25
+            arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=-0.2', color='1.0'))
         #CS_bc = plt.contour(TAU, -AU, Zs, levels=(0.8,), colors='w', origin='lower', hold='on')
    
 
 def colorbar_only():
-    #fig = plt.figure(figsize=(0.375, 1.44))
-    fig = plt.figure(figsize=(0.375, 1.92))
+    fig = plt.figure(figsize=(0.375, 1.44))
+    #fig = plt.figure(figsize=(0.375, 1.92))
     ax1 = fig.add_axes([0, 0.05, 0.25, 1])
     
-    cmap = mpl.colors.ListedColormap(['1.0', '0.75', '0.5', '0.25', '0.15', '0.0'])
+    cmap = mpl.colors.ListedColormap(['1.0', '0.85', '0.75', '0.65', '0.5', '0.35', '0.0'])
 
     bounds = [0.0, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0]
     norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
     cb2 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, boundaries=bounds,ticks=bounds, orientation='vertical')
     cb2.set_label(r'Packet reception ratio ($\mathrm{PRR}$)', fontsize=12)
 
-    plt.savefig('pdf/cb.pdf')
+    plt.savefig('pdf/cb-1fig.pdf')
 
 
 if __name__ == '__main__':
@@ -124,6 +119,11 @@ if __name__ == '__main__':
 
     #for decision in ('hard', 'soft'):
     #    plot(mode, content, decision, wide)
-    plot ('sync', 'same', 'soft', '')
+    
+    # for unif
+    plot ('sync', 'unif', 'hard', '_wide')
+
+    # for same
+    #plot ('usync', 'unif', 'soft', '')
 
     #colorbar_only()

@@ -1,18 +1,3 @@
-# Copyright 2013 Matthias Wilhelm
-
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import sys
 
 sys.path.append('../src')
@@ -77,7 +62,7 @@ def plot():
     e2 = Ellipse(xy=(2.5, 0.55), width=0.15, height=0.4, angle=-45, fill=False)
     ax.add_artist(e2)
 
-    lgd = plt.legend((l2, l1), (r'One interferer', r'$n$ interferers'), loc='center right', handlelength=0.5)
+    lgd = plt.legend((l2, l1), (r'One interferer with $n$-fold power', r'$n$ interferers'), loc='center right', handlelength=0.5)
     
     plt.savefig('pdf/ninterf_%s.pdf' % (decision))
     #plt.show()

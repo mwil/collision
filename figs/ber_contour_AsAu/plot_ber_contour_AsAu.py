@@ -1,18 +1,3 @@
-# Copyright 2013 Matthias Wilhelm
-
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 from __future__ import print_function
 
 import numpy as np
@@ -43,12 +28,13 @@ def do_plot(mode, content, wide):
     
     if mode in ('sync',):
         # Plot the inverse power ratio, sync signal is stronger for positive ratios
-        CSf = plt.contourf(TAU, -AU, Zs, levels=(0.0, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0), colors=('1.0', '0.75', '0.5', '0.25', '0.15', '0.0'), origin='lower')
-        CS2 = plt.contour(CSf, colors = ('r',)*5+('w',), linewidths=(0.75,)*5+(1.0,), origin='lower', hold='on')
+        CSf = plt.contourf(TAU, -AU, Zs, levels=(0.0, 0.1, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0), colors=('1.0', '0.85', '0.75', '0.65', '0.5', '0.35', '0.0'), origin='lower')
+        CS2 = plt.contour(CSf, colors = ('r',)*6+('w',), linewidths=(0.75,)*6+(1.0,), origin='lower', hold='on')
     else:
         #CSf  = plt.contourf(TAU, -AU, Zs, levels=(0.0, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0), colors=('1.0', '0.75', '0.5', '0.25', '0.15', '0.0'), origin='lower')
         #CS2f = plt.contour(CSf, levels=(0.0, 0.2, 0.4, 0.6, 0.8, 1.0), colors=4*('r',)+('w',), linewidths=(0.75,)*4+(1.0,), origin='lower', hold='on')
         CS2f = plt.contour(TAU, -AU, Zs, levels=(0.9, 1.0), colors=('0.0',), linewidths=(1.0,), origin='lower', hold='on')
+        
         if content in ('unif',):
             CSu  = plt.contourf(TAU, -AU, Zu, levels=(0.2, 1.0), colors=('0.75',), origin='lower')
             CS2  = plt.contour(CSu, levels=(0.2,), colors = ('r',), linewidths=(1.0,), origin='lower', hold='on')
@@ -61,16 +47,16 @@ def do_plot(mode, content, wide):
             plt.annotate(r'$\delta_{\mathrm{SIR}}$', xy=(-0.25, 1), xytext=(-1.25, 1.75), color='1.0', fontsize=10,
                 arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=-0.2', color='1.0'))
     else:
-        plt.annotate(r'$\delta_{\mathrm{SIR}}$', xy=(-0.25, 1), xytext=(-1.25, 1.75), color='0.0', fontsize=10,
+        plt.annotate(r'$\delta_{\mathrm{SIR}}$', xy=(-0.25, 1), xytext=(-1.25, 3.75), color='0.0', fontsize=10,
             arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=-0.2', color='0.0'))
 
     #cb  = plt.colorbar(CSf)
     
     if mode in ('sync'):
         if wide:
-            plt.axis([-4.0, 4.0, -10, 3])
+            plt.axis([-4.0, 4.0, -13, 3])
         else:
-            plt.axis([-1.5, 1.5, -10, 3])
+            plt.axis([-1.5, 1.5, -13, 3])
     else:
         plt.axis([-1.5, 1.5, -50, 10])
 

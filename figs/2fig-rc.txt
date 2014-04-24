@@ -1,26 +1,11 @@
-# Copyright 2013 Matthias Wilhelm
-
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 backend : pdf
 
-axes.labelsize : 14
+axes.labelsize : 10
 
 text.usetex : True
 
-xtick.labelsize : 10
-ytick.labelsize : 10
+xtick.labelsize : 8
+ytick.labelsize : 8
 
 # width = 3.33 inch, 3.33 *golden_ratio
 figure.figsize : 3.45, 1.75
@@ -29,7 +14,7 @@ font.family : serif
 font.serif : Times
 
 legend.labelspacing : 0.25
-legend.fontsize : 10
+legend.fontsize : 8
 legend.numpoints : 1
 
 savefig.bbox : tight
