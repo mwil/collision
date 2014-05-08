@@ -1,75 +1,61 @@
-from __future__ import print_function
+import argparse
 
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
-import itertools as it
+mpl.rc_file('../1fig-contour-rc.txt')
 
-#from settings import *
-
-#print AU[:,::-1]
+from style_ber_contour_AsAu import Style1col
 
 def do_plot(mode, content, wide):
-    data = np.load('data/prr_AsAu_%s%s.npz'%(content, wide))
-    Zs = data['BER_S']
-    Zu = data['BER_U']
-    tau_range = data['tau_range']
-    Au_range  = 20*np.log10(data['Au_range'])
+	global style
+	style.apply(mode, content, wide)
 
-    AU, TAU = np.meshgrid(Au_range, tau_range)
+	data = np.load('data/prr_AsAu_%s%s.npz'%(content, wide))
 
-    mpl.rc_file('../3fig-contour-rc.txt')
-    #mpl.rc_file('../2fig-contour-rc.txt')
+	AU, TAU = np.meshgrid(-data['Au_range_dB'], data['tau_range'])
+	Zu = data['PRR_U']
+	Zs = data['PRR_S']
 
-    print('DEBUG: If "Inputs x and y must be 1D or 2D." -> Shape mismatch TAU, AU, Zu: ', TAU.shape, AU.shape, Zu.shape)
-    
-    plt.clf()
-    
-    if mode in ('sync',):
-        # Plot the inverse power ratio, sync signal is stronger for positive ratios
-        CSf = plt.contourf(TAU, -AU, Zs, levels=(0.0, 0.1, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0), colors=('1.0', '0.85', '0.75', '0.65', '0.5', '0.35', '0.0'), origin='lower')
-        CS2 = plt.contour(CSf, colors = ('r',)*6+('w',), linewidths=(0.75,)*6+(1.0,), origin='lower', hold='on')
-    else:
-        #CSf  = plt.contourf(TAU, -AU, Zs, levels=(0.0, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0), colors=('1.0', '0.75', '0.5', '0.25', '0.15', '0.0'), origin='lower')
-        #CS2f = plt.contour(CSf, levels=(0.0, 0.2, 0.4, 0.6, 0.8, 1.0), colors=4*('r',)+('w',), linewidths=(0.75,)*4+(1.0,), origin='lower', hold='on')
-        CS2f = plt.contour(TAU, -AU, Zs, levels=(0.9, 1.0), colors=('0.0',), linewidths=(1.0,), origin='lower', hold='on')
-        
-        if content in ('unif',):
-            CSu  = plt.contourf(TAU, -AU, Zu, levels=(0.2, 1.0), colors=('0.75',), origin='lower')
-            CS2  = plt.contour(CSu, levels=(0.2,), colors = ('r',), linewidths=(1.0,), origin='lower', hold='on')
+	assert TAU.shape == AU.shape == Zu.shape, 'The inputs TAU, AU, PRR_U must have the same shape for plotting!'
+	
+	plt.clf()
+	
+	if mode in ('sync',):
+		# Plot the inverse power ratio, sync signal is stronger for positive ratios
+		CSf = plt.contourf(TAU, AU, Zs, levels=(0.0, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0), colors=('1.0', '0.75', '0.5', '0.25', '0.15', '0.0'), origin='lower')
+		CS2 = plt.contour(CSf, colors = ('r',)*5+('w',), linewidths=(0.75,)*5+(1.0,), origin='lower', hold='on')
+	else:
+		CSf  = plt.contourf(TAU, AU, Zs, levels=(0.0, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0), colors=('1.0', '0.75', '0.5', '0.25', '0.15', '0.0'), origin='lower')
+		CS2f = plt.contour(CSf, levels=(0.0, 0.2, 0.4, 0.6, 0.8, 1.0), colors=4*('r',)+('w',), linewidths=(0.75,)*4+(1.0,), origin='lower', hold='on')
+		#CS2f = plt.contour(TAU, -AU, Zu, levels=(0.9, 1.0), colors=('0.0',), linewidths=(1.0,), origin='lower', hold='on')
+		if content in ('unif',):
+			CSu  = plt.contourf(TAU, AU, Zu, levels=(0.2, 1.0), hatches=('////',), colors=('0.75',), origin='lower')
+			CS2  = plt.contour(CSu, levels=(0.2,), colors = ('r',), linewidths=(1.0,), origin='lower', hold='on')
 
-    if mode in ('sync',):
-        if wide:
-            plt.annotate(r'$\delta_{\mathrm{SIR}}$', xy=(-0.25, 1), xytext=(-3.25, 1.75), color='1.0', fontsize=10,
-                arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=-0.2', color='1.0'))
-        else:
-            plt.annotate(r'$\delta_{\mathrm{SIR}}$', xy=(-0.25, 1), xytext=(-1.25, 1.75), color='1.0', fontsize=10,
-                arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=-0.2', color='1.0'))
-    else:
-        plt.annotate(r'$\delta_{\mathrm{SIR}}$', xy=(-0.25, 1), xytext=(-1.25, 3.75), color='0.0', fontsize=10,
-            arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=-0.2', color='0.0'))
+	style.annotate(mode, content, wide)
+	
+	plt.axis([data['tau_range'][0], data['tau_range'][-1], -data['Au_range_dB'][-1], -data['Au_range_dB'][0]])
 
-    #cb  = plt.colorbar(CSf)
-    
-    if mode in ('sync'):
-        if wide:
-            plt.axis([-4.0, 4.0, -13, 3])
-        else:
-            plt.axis([-1.5, 1.5, -13, 3])
-    else:
-        plt.axis([-1.5, 1.5, -50, 10])
+	plt.ylabel(r'Signal power ratio ($\mathrm{SIR}$)', labelpad=2) 
+	plt.xlabel(r'Time offset $\tau$ ($/T$)', labelpad=2)
+	
+	plt.savefig('pdf/prrc2_%s_%s%s_z.pdf'%(mode, content, wide))
 
-    plt.ylabel(r'Signal power ratio ($\mathrm{SIR}$)', labelpad=0) 
-    #cb.set_label(r'Packet reception ratio ($\mathrm{PRR}$)')
-    plt.xlabel(r'Time offset $\tau$ ($/T$)', labelpad=2)
-    
-    plt.savefig('pdf/prrc2_%s_%s%s_v2.pdf'%(mode, content, wide))
+
 
 if __name__ == '__main__':
-    #for mode, content in it.product(('sync', 'usync'), ('same', 'unif')):
-    #for mode, content in it.product(('sync',), ('unif',)):
-    np.set_printoptions(precision=3, suppress=True, threshold=np.NaN, linewidth=180)
+	argp = argparse.ArgumentParser()
+	argp.add_argument('mode',  choices=('sync', 'usync'), help='Plot from the view of the synchronized or unsynchronized sender')
+	argp.add_argument('content',  choices=('same', 'unif'), help='Relation between data content in the two transmitted packets')
+	argp.add_argument('-w', '--wide', action='store_true', help='Wide interval of time offsets used (-4T to 4T instead of -1.5T to 1.5T)')
 
-    do_plot('usync', 'unif', '')
+	args = argp.parse_args()
 
+	wide = ('_wide' if args.wide else '')
+
+	style = Style1col()
+
+	do_plot(args.mode, args.content, wide)
