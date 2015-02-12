@@ -1,4 +1,4 @@
-Packet Collisions in IEEE 802.15.4 Networks
+Packet Collisions in 802.15.4 Networks
 =========
 
 Simulation code for the analysis of concurrent transmission in IEEE 802.15.4 wireless networks. 
@@ -13,6 +13,6 @@ This is the accompanying code to the technical report available at [ArXiv](http:
 For the src/figs part, you need a matplotlib installation that supports TeX output (see the [matplotlib help page](http://matplotlib.org/users/usetex.html))
 
 ###Example Outputs
-![Contour plot of the bit error rate (BER)](examples/ber_contour.pdf)
+![Contour plot of the bit error rate (BER)](examples/ber_contour.png)
 
-![MSK waveform](examples/msk_wave.pdf)
+![MSK waveform](examples/msk_wave.png)
