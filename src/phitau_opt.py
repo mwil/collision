@@ -255,11 +255,15 @@ def detect_syms_corrcoef(recv_chips):
 
 	Implements Eq. 10 in the technical report. Should provide a speedup by using the np.corrcoef function, but doesn"t.
 
-	Args:
-	    recv_chips: Interleaved (soft) bits detected.
+	Parameters
+	----------
+	recv_chips
+		Interleaved (soft) bits detected.
 
-	Returns:
-	    A sequence of symbols that provide the best correlation to the input bit sequence.
+	Returns
+	-------
+	recv_syms
+		A sequence of symbols that provide the best correlation to the input bit sequence.
 	"""
 	recv_syms = np.array([])
 
