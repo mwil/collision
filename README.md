@@ -13,6 +13,8 @@ This is the accompanying code to the technical report available at [ArXiv](http:
 For the src/figs part, you need a matplotlib installation that supports TeX output (see the [matplotlib help page](http://matplotlib.org/users/usetex.html))
 
 ###Example Outputs
+####BER Contour Plot
 ![Contour plot of the bit error rate (BER)](examples/ber_contour.png)
 
+####MSK Waveform Plot
 ![MSK waveform](examples/msk_wave.png)
