@@ -1,3 +1,18 @@
+# Copyright 2013-2014 Matthias Wilhelm
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 from __future__ import print_function
 
 import argparse
@@ -5,7 +20,7 @@ import os
 import sys
 import time
 
-sys.path.append('../src')
+sys.path.append('../../src')
 
 import numpy as np
 import phitau_opt as pt
@@ -54,7 +69,7 @@ def do_gen(part, content, wide, numthreads):
 			send_chips = np.vstack((send_chips, send_chips))
 		else:
 			send_chips = np.array([2*np.random.randint(2, size=4*nbits)-1]).reshape((4, nbits))
-		
+
 		for Au_idx, Au in enumerate(Au_range):
 			ber_u_phi = np.zeros(phi_range.shape[0])
 			ber_s_phi = np.zeros(phi_range.shape[0])
@@ -63,10 +78,10 @@ def do_gen(part, content, wide, numthreads):
 				(sys.argv[0], tau, tau_idx+1, tau_range.shape[0], Au, Au_idx+1, Au_range.shape[0], time.time() - start_time))
 
 			start_time = time.time()
-			
+
 			RECV_CHIPS_I = pt.detect_i(send_chips[:2], send_chips[2:], phi_range, tau, As, Au)
 			RECV_CHIPS_Q = pt.detect_q(send_chips[:2], send_chips[2:], phi_range, tau, As, Au)
-			
+
 			for phi_idx, phi in enumerate(phi_range):
 				recv_chips       = np.zeros(2*RECV_CHIPS_I.shape[0])
 				recv_chips[::2]  = np.sign(RECV_CHIPS_I[:,phi_idx])
@@ -79,16 +94,16 @@ def do_gen(part, content, wide, numthreads):
 				sync_chips       = np.zeros(2*send_chips.shape[1])
 				sync_chips[::2]  = send_chips[0]
 				sync_chips[1::2] = send_chips[1]
-			
+
 				# ignore chips that are only partially affected here
 				ber_s_phi[phi_idx] = np.sum(recv_chips[2:-2] != sync_chips[2:-2])  / (1.0*len(recv_chips[2:-2]))
 				ber_u_phi[phi_idx] = np.sum(recv_chips[2:-2] != usync_chips[2:-2]) / (1.0*len(recv_chips[2:-2]))
-		
+
 			PRR_S[tau_idx, Au_idx] = np.mean((1-ber_s_phi)**pktlen)
 			PRR_U[tau_idx, Au_idx] = np.mean((1-ber_u_phi)**pktlen)
-		
+
 	np.savez_compressed('data/prr_AsAu_%s%s_part%i.npz'%(content, wide, part), PRR_S=PRR_S, PRR_U=PRR_U,
-		tau_range=tau_range, As=As, Au_range=Au_range, phi_range=phi_range, 
+		tau_range=tau_range, As=As, Au_range=Au_range, phi_range=phi_range,
 		pktlen=pktlen, nsteps=nsteps, nbits=nbits)
 
 
@@ -127,7 +142,7 @@ if __name__ == '__main__':
 
 		os.remove('data/prr_AsAu_%s%s_part%i.npz'%(args.content, wide, part))
 
-	np.savez_compressed('data/prr_AsAu_%s%s.npz'%(args.content, wide), 
+	np.savez_compressed('data/prr_AsAu_%s%s.npz'%(args.content, wide),
 		PRR_S=PRR_S, PRR_U=PRR_U,
 		tau_range=tau_range, As=As, Au_range=Au_range, phi_range=phi_range, Au_range_dB=Au_range_dB,
 		nsteps=nsteps, nbits=nbits, T=T, pktlen=pktlen)
