@@ -15,40 +15,44 @@
 
 from __future__ import print_function
 
+# python2 input fix (http://stackoverflow.com/questions/954834)
+try: input = raw_input
+except NameError: pass
+
 import os
 import sys
 
 def get_params(input_params):
-    params = []
+	params = []
 
-    for var, choices, prompt in input_params:
-        resp = None
-        while resp not in choices:
-            resp = input(prompt+" "+repr(choices) +"? ").lower()
-        params.append(resp)
+	for var, choices, prompt in input_params:
+		resp = None
+		while resp not in choices:
+			resp = input(prompt+" "+repr(choices) +"? ").lower()
+		params.append(resp)
 
-    return params
+	return params
 
 def overwrite_ok(filepath):
-    # Since the computations are quite long, make sure that existing results should really be deleted!
-    if os.path.exists(filepath):
-        print("The file already exists!")
-        resp = None
+	# Since the computations are quite long, make sure that existing results should really be deleted!
+	if os.path.exists(filepath):
+		print("The file already exists!")
+		resp = None
 
-        while resp not in ("yes", "no", "y", "n"):
-            resp = input("Do you want to continue (y/n)? ").lower()
+		while resp not in ("yes", "no", "y", "n"):
+			resp = input("Do you want to continue (y/n)? ").lower()
 
-        if resp not in ("yes", "y"):
-            return False
+		if resp not in ("yes", "y"):
+			return False
 
-    return True
+	return True
 
 def osx_notify():
-    try:
-        from osax import OSAX
-    except:
-        print("appscript not installed ...")
+	try:
+		from osax import OSAX
+	except:
+		print("appscript not installed ...")
 
-    sa = OSAX()
-    sa.activate()
-    sa.display_dialog("%s: computations are finished!" % (sys.argv[0]))
+	sa = OSAX()
+	sa.activate()
+	sa.display_dialog("%s: computations are finished!" % (sys.argv[0]))

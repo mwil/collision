@@ -28,7 +28,7 @@ import tools
 ######################################################
 #################      SETTINGS      #################
 ######################################################
-nsteps         = 256
+nsteps         = 1024
 num_interferer = 8
 
 settings = {
@@ -55,17 +55,17 @@ def gen_n_interf(content, decision, mode="n"):
 	"""
 	SER_S = np.empty((num_interferer+1, nsteps))
 
-	for ninterf in np.arange(0, num_interferer+1):
-		print("Starting to generate for %i interferers, mode is %s" % (ninterf, mode))
+	for ninterf_ in np.arange(0, num_interferer+1):
+		print("Starting to generate for %i interferers, mode is %s" % (ninterf_, mode))
+		ninterf = ninterf_  # remember the real number of virtual interferers (power setting)
+		Au = Au_
 
 		if mode in ("1",):
 			# we use a single interferer with the same power as n interferers
 			Au = Au_ * np.sqrt(ninterf)
-			if ninterf:
+
+			if ninterf > 1:
 				ninterf = 1
-		else:
-			# we use n low-power interferers with default power setting
-			Au = Au_
 
 		if ninterf == 0:
 			phi_range = np.zeros((1,nsteps))
@@ -94,11 +94,11 @@ def gen_n_interf(content, decision, mode="n"):
 			if decision in ("hard",):
 				recv_chips = np.sign(recv_chips)
 
-			recv_syms = pt.detect_syms_corrcoef(recv_chips)[1:-1]
+			recv_syms = pt.detect_syms_corr(recv_chips)[1:-1]
 
-			SER_S[ninterf, phi_idx] = np.sum(recv_syms != send_syms_s) / (1.0*len(recv_syms))
+			SER_S[ninterf_, phi_idx] = np.sum(recv_syms != send_syms_s) / (1.0*len(recv_syms))
 
-		print("PRR = ", np.mean((1.0-SER_S[ninterf,:])**pktlen))
+		print("PRR = ", np.mean((1.0-SER_S[ninterf_,:])**pktlen))
 
 	np.savez_compressed("data/ser_s_%s_%s_%s.npz"%(content, decision, mode), SER_S=SER_S, **settings)
 

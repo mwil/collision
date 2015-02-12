@@ -32,37 +32,45 @@ for sym in range(1, 8):
 for sym in chips.keys():
 	chips[sym] = 2*chips[sym] - 1
 
-# Additional chipping sequence to remain silent during this symbol (if symbol is given as 'None')
+# Additional chipping sequence to remain silent during this symbol (if symbol is given as "None")
 chips[None] = np.array([0]*32)
 
 chips_a = np.vstack([chips[i] for i in range(16)])
 
 def detect_i(alpha, beta, phi_range, tau, As, Au):
-	'''Calculate the in-phase demodulation output for two colliding MSK signals s(t) and u(t).
+	"""Calculate the in-phase demodulation output for two colliding MSK signals s(t) and u(t).
 
 	This function implements Eq. 9 in the technical report for two signals and a noiseless channel.
 
-	Args:
-	    alpha (2d np.array [I/Q][chips]): IQ bits/chips sent by the synchronized sender S.
-              (Example: np.array([[-1, 1, -1], [1, 1, -1]]))
+	Parameters
+	----------
+	alpha
+		(2d np.array [I/Q][chips]): IQ bits/chips sent by the synchronized sender S.
+		(Example: np.array([[-1, 1, -1], [1, 1, -1]]))
 
-	    beta  (2d np.array [I/Q][chips]): IQ bits/chips sent by the interfering sender U.
-              (See alpha)
+	beta
+		(2d np.array [I/Q][chips]): IQ bits/chips sent by the interfering sender U.
+		(See alpha)
 
-	    phi_range (1d np.array): Carrier phase offsets of the interfering sender.
-	          (Example: np.arange(-np.pi, np.pi, num=10))
+	phi_range
+		(1d np.array): Carrier phase offsets of the interfering sender.
+		(Example: np.arange(-np.pi, np.pi, num=10))
 
-	    tau:  Time offset between s(t) and u(t).
-              (Example: 2*T)
+	tau
+		Time offset between s(t) and u(t).
+		(Example: 2*T)
 
-	    As:   Signal amplitude of s(t).
-	    Au:   Signal amplitude of u(t).
-              Updated version: Au now can also be an array of Au values to speed things up with
-              3D calculations. [However, this requires too much memory and is not that much faster.]
+	As
+		Signal amplitude of s(t).
+	Au
+		Signal amplitude of u(t).
+		Updated version: Au now can also be an array of Au values to speed things up with
+		3D calculations. [However, this requires too much memory and is not that much faster.]
 
-	Returns:
-	    Scaled soft bit \hat{o}^I_k with values in range [-1,1].
-	'''
+	Returns
+	-------
+	Scaled soft bit \hat{o}^I_k with values in range [-1,1].
+	"""
 	_tau_   = np.remainder(tau, 2*T)
 	_tau_n_ = np.remainder(tau+T, 2*T)
 	omega_p = np.pi/(2*T)
@@ -109,10 +117,10 @@ def detect_i(alpha, beta, phi_range, tau, As, Au):
 
 
 def detect_q(alpha, beta, phi_range, tau, As, Au):
-	'''Calculate the quadrature-phase demodulation output for two colliding MSK signals s(t) and u(t).
+	"""Calculate the quadrature-phase demodulation output for two colliding MSK signals s(t) and u(t).
 
 	See detect_i for details, this function yields results for \hat{o}^Q_k.
-	'''
+	"""
 	_tau_   = np.remainder(tau, 2*T)
 	_tau_p_ = np.remainder(tau-T, 2*T)
 	omega_p = np.pi/(2*T)
@@ -159,16 +167,18 @@ def detect_q(alpha, beta, phi_range, tau, As, Au):
 
 
 def map_chips(syncsyms, usyms):
-	'''Map 4 bit symbols to 32 bit chipping sequences.
+	"""Map 4 bit symbols to 32 bit chipping sequences.
 
-	Args:
+	Parameters
+	----------
 	    syncsyms: Symbols of the synchronized sender.
 	    usyms: Symbols of the interferer.
 
-	Returns:
+	Returns
+	-------
 	    2d nparray of in- and quadrature-phase chips from the 2.4 GHz PHY of IEEE 802.15.4 for both
 	    the synchronized sender (alpha) and the interferer (beta).
-	'''
+	"""
 	chips_i, chips_q = {}, {}
 
 	# Split chipping sequences in I and Q
@@ -205,7 +215,7 @@ def channel(alpha, beta, phi_range, tau, As, Au):
 	return recv_chips
 
 def detect_syms_corr(recv_chips):
-	assert len(recv_chips)%32 == 0, 'The number of chips must be a multiple of the symbol length (32 chips)!'
+	assert len(recv_chips)%32 == 0, "The number of chips must be a multiple of the symbol length (32 chips)!"
 
 	recv_syms = np.zeros(len(recv_chips)//32)
 
@@ -241,19 +251,19 @@ def detect_syms_corr(recv_chips):
 	return recv_syms
 
 def detect_syms_corrcoef(recv_chips):
-	'''Find the symbols with the highest correlation to the received input chips.
+	"""Find the symbols with the highest correlation to the received input chips.
 
-	Implements Eq. 10 in the technical report. Should provide a speedup by using the np.corrcoef function, but doesn't.
+	Implements Eq. 10 in the technical report. Should provide a speedup by using the np.corrcoef function, but doesn"t.
 
 	Args:
 	    recv_chips: Interleaved (soft) bits detected.
 
 	Returns:
 	    A sequence of symbols that provide the best correlation to the input bit sequence.
-	'''
+	"""
 	recv_syms = np.array([])
 
-	assert len(recv_chips)%32 == 0, 'The number of chips must be a multiple of the symbol length (32 chips)!'
+	assert len(recv_chips)%32 == 0, "The number of chips must be a multiple of the symbol length (32 chips)!"
 
 	# Choose the symbol with the highest correlation value
 	for i in range(len(recv_chips)//32):
@@ -270,7 +280,7 @@ def detect_syms_corrcoef(recv_chips):
 def detect_syms_cerr(recv_chips):
 	recv_syms = np.array([])
 
-	assert len(recv_chips)%32 == 0, 'The number of chips must be a multiple of the symbol length (32 chips)!'
+	assert len(recv_chips)%32 == 0, "The number of chips must be a multiple of the symbol length (32 chips)!"
 
 	# Choose the symbol with the lowest number of chip errors
 	while len(recv_chips) > 0:
