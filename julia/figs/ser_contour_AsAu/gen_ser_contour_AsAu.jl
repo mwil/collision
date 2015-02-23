@@ -35,11 +35,11 @@ end
 function do_gen(content::String, decision::String)
 	const T = 1.0
 	const nsyms = 2^8
-	const nsteps = 2^7
+	const nsteps = 2^8
 	const pktlen = 8
 
-	const τ_range  = linspace(-3T, 3T, nsteps)
-	const Au_range = sqrt(logspace(-1, 5, nsteps))
+	const τ_range  = linspace(-1.5T, 1.5T, nsteps)
+	const Au_range = √logspace(-1, 5, nsteps)
 	const 𝜑_range  = linspace(-π, π, nsteps)
 	
 	PRR_S = dzeros(length(Au_range), length(τ_range))
@@ -47,13 +47,13 @@ function do_gen(content::String, decision::String)
 
 	@sync @parallel for i=1:length(workers())
 		calcPRR!(PRR_S, PRR_U, content, decision, τ_range, Au_range, 𝜑_range, 
-				 As=1.0, nsyms=2^8, nsteps=2^7, pktlen=8)
+				 As=1.0, nsyms=nsyms, nsteps=nsteps, pktlen=pktlen)
 	end
 
-	NPZ.npzwrite("data/scAu_$(content)_$(decision).npz",
+	NPZ.npzwrite(joinpath("data", "scAu_$(content)_$(decision).npz"),
 				 Dict("PRR_S"=>convert(Array, PRR_S), "PRR_U"=>convert(Array, PRR_U),
 					  "tau_range"=>τ_range, "phi_range"=>𝜑_range, "Au_range"=>Au_range,
-					  "As"=>As, "nsyms"=>nsyms, "nsteps"=>nsteps, "pktlen"=>pktlen))
+					  "As"=>1.0, "nsyms"=>nsyms, "nsteps"=>nsteps, "pktlen"=>pktlen))
 end
 
 # -----------------------------------------------------------------------------
@@ -86,18 +86,16 @@ end
 
 
 	for (τ_idx, τ) in enumerate(τ_range[lidx[2]])
-		println("τ = ", @sprintf("% .3f", τ), ". Worker progress: ", @sprintf("%6.2f", 100.τ_idx/length(lidx[2])), "%")
 		tic()
 
+		rand!(α_send_syms, 1:16)
+		pt.map_chips!(α_send_chips, α_send_syms)
+
 		if content == "same"
-			rand!(α_send_syms, 1:16)
 			β_send_syms  = α_send_syms
-			pt.map_chips!(α_send_chips, α_send_syms)
 			β_send_chips = α_send_chips
 		else
-			rand!(α_send_syms, 1:16)
 			rand!(β_send_syms, 1:16)
-			pt.map_chips!(α_send_chips, α_send_syms)
 			pt.map_chips!(β_send_chips, β_send_syms)
 		end
 
@@ -122,6 +120,7 @@ end
 		end
 
 		toc()
+		println("τ = ", @sprintf("% .3f", τ), ". Worker progress: ", @sprintf("%6.2f", 100.τ_idx/length(lidx[2])), "%")
 	end
 end
 

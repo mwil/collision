@@ -51,7 +51,7 @@ function do_gen(content::String, decision::String)
 	NPZ.npzwrite("data/serc_$(content)_$(decision).npz",
 				 Dict("SER_S"=>convert(Array, SER_S), "SER_U"=>convert(Array, SER_U),
 					  "tau_range"=>τ_range, "phi_range"=>𝜑_range,
-					  "As"=>As, "Au"=>Au, "nsyms"=>nsyms, "nsteps"=>nsteps))
+					  "As"=>1.0, "Au"=>Au, "nsyms"=>nsyms, "nsteps"=>nsteps))
 end
 
 # -----------------------------------------------------------------------------
@@ -99,13 +99,14 @@ end
 		if decision == "hard"
 			RECV_CHIPS = complex(sign(real(RECV_CHIPS)), sign(imag(RECV_CHIPS)))
 		end
-
+		tic()
 		for 𝜑_idx in 1:length(lidx[1])
 			pt.detect_syms_corr!(recv_syms, RECV_CHIPS[:,𝜑_idx])
 
 			SER_S[𝜑_idx,τ_idx] = countnz(recv_syms .≠ α_send_syms)/nsyms
 			SER_U[𝜑_idx,τ_idx] = countnz(recv_syms .≠ β_send_syms)/nsyms
 		end
+		toc()
 	end
 end
 

@@ -15,9 +15,11 @@
 
 module PhiTau
 
-export T, chips, Λu, map_chips!, detect_syms_corr!
+export Λu, map_chips!, detect_syms_corr!
 
 const T = 1.0
+
+# -----------------------------------------------------------------------------
 
 tmp_chips = zeros(Complex128, 16, 16)
 
@@ -32,7 +34,42 @@ for sym_idx in 1:7
 	tmp_chips[:,sym_idx+9] = conj(tmp_chips[:,sym_idx+1])
 end
 
-const chips = tmp_chips
+const CHIPSEQ_MAPPING = tmp_chips
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
+function Λu(β::Vector{Complex128}, 𝜑_range::Vector{Float64}, τ::Float64)
+	complex(Λu_i(β, 𝜑_range, τ), Λu_q(β, 𝜑_range, τ))
+end
+# -----------------------------------------------------------------------------
+
+function Λu_i(β::Vector{Complex128}, 𝜑_range::Vector{Float64}, τ::Float64)
+	𝜑_p = (π/2T)τ
+	τ_i_, τ_q_ = mod(τ, 2T),       mod((τ+T), 2T)
+	k_i,  k_q  = floor(Int, τ/2T), floor(Int, (τ+T)/2T)
+
+	βk_i, βkn_i = shift_indices(real(β), k_i)
+	βk_q, βkn_q = shift_indices(imag(β), k_q)
+
+	1/2T * (cos(𝜑_range').*(cos(𝜑_p)*(τ_i_*βkn_i .+ (2T-τ_i_)*βk_i).-sin(𝜑_p)*(2T/π) * (βkn_i.-βk_i))
+		  .-sin(𝜑_range').*(sin(𝜑_p)*(τ_q_*βkn_q .+ (2T-τ_q_)*βk_q).+cos(𝜑_p)*(2T/π) * (βkn_q.-βk_q)))
+end
+# -----------------------------------------------------------------------------
+
+function Λu_q(β::Vector{Complex128}, 𝜑_range::Vector{Float64}, τ::Float64)
+	𝜑_p = (π/2T)τ
+	τ_q_, τ_i_ = mod(τ, 2T),       mod((τ-T), 2T)
+	k_q,  k_i  = floor(Int, τ/2T), floor(Int, (τ-T)/2T)
+
+	βk_i, βkn_i = shift_indices(real(β), k_i)
+	βk_q, βkn_q = shift_indices(imag(β), k_q)
+
+	1/2T * (cos(𝜑_range').*(cos(𝜑_p)*(τ_q_*βkn_q .+ (2T-τ_q_)*βk_q).-sin(𝜑_p)*(2T/π) * (βkn_q.-βk_q))
+		  .-sin(𝜑_range').*(sin(𝜑_p)*(τ_i_*βkn_i .+ (2T-τ_i_)*βk_i).+cos(𝜑_p)*(2T/π) * (βkn_i.-βk_i)))
+end
+# -----------------------------------------------------------------------------
 
 function shift_indices(X::Vector{Float64}, k::Int)
 	if k > 0
@@ -50,60 +87,21 @@ function shift_indices(X::Vector{Float64}, k::Int)
 	return Xk, Xkn
 end
 
-function Λu_i(β::Vector{Complex128}, 𝜑_range::Vector{Float64}, τ::Float64)
-	𝜑_p = (π/2T)τ
-	τ_i_, τ_q_ = mod(τ, 2T),       mod((τ+T), 2T)
-	k_i,  k_q  = floor(Int, τ/2T), floor(Int, (τ+T)/2T)
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
-	βk_i, βkn_i = shift_indices(real(β), k_i)
-	βk_q, βkn_q = shift_indices(imag(β), k_q)
-
-	1/2T * (cos(𝜑_range').*(cos(𝜑_p)*(τ_i_*βkn_i .+ (2T-τ_i_)*βk_i).-sin(𝜑_p)*(2T/π) * (βkn_i.-βk_i))
-		  .-sin(𝜑_range').*(sin(𝜑_p)*(τ_q_*βkn_q .+ (2T-τ_q_)*βk_q).+cos(𝜑_p)*(2T/π) * (βkn_q.-βk_q)))
-end
-
-function Λu_q(β::Vector{Complex128}, 𝜑_range::Vector{Float64}, τ::Float64)
-	𝜑_p = (π/2T)τ
-	τ_q_, τ_i_ = mod(τ, 2T),       mod((τ-T), 2T)
-	k_q,  k_i  = floor(Int, τ/2T), floor(Int, (τ-T)/2T)
-
-	βk_i, βkn_i = shift_indices(real(β), k_i)
-	βk_q, βkn_q = shift_indices(imag(β), k_q)
-
-	1/2T * (cos(𝜑_range').*(cos(𝜑_p)*(τ_q_*βkn_q .+ (2T-τ_q_)*βk_q).-sin(𝜑_p)*(2T/π) * (βkn_q.-βk_q))
-		  .-sin(𝜑_range').*(sin(𝜑_p)*(τ_i_*βkn_i .+ (2T-τ_i_)*βk_i).+cos(𝜑_p)*(2T/π) * (βkn_i.-βk_i)))
-end
-
-function Λu(β::Vector{Complex128}, 𝜑_range::Vector{Float64}, τ::Float64)
-	complex(Λu_i(β, 𝜑_range, τ), Λu_q(β, 𝜑_range, τ))
-end
-
-function map_chips!(chipseq:: Vector{Complex128}, syms::Vector{Int})
+function map_chips!(chipseq::Vector{Complex128}, syms::Vector{Int})
 	for (idx, sym) in enumerate(syms)
-		chipseq[1+16(idx-1):16idx] = chips[:,sym]
+		chipseq[1+16(idx-1):16idx] = CHIPSEQ_MAPPING[:,sym]
 	end
 
 	return chipseq
 end
 
-# Implements the correlate function from numpy for the "valid" setting
-# (http://docs.scipy.org/doc/numpy/reference/generated/numpy.correlate.html)
-#function sym_correlate{T<:Number}(a::Matrix{T}, v::Vector{T})
-#	real(sum(a.*conj(v), 1))'
-#end
-
-@inline function sym_correlate(a::Matrix{Complex128}, v::Vector{Complex128})
-	res = zeros(Complex128, 16)
-
-	@inbounds @simd for sym in 1:16
-		for idx in 1:16
-			res[sym] += a[idx, sym] * conj(v[idx])
-		end
-	end
-
-	return abs(real(res))
-end
-
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 function detect_syms_corr!(recv_syms::Vector{Int}, recv_chips::Vector{Complex128})
 	if length(recv_chips) % 16 ≠ 0
@@ -112,25 +110,56 @@ function detect_syms_corr!(recv_syms::Vector{Int}, recv_chips::Vector{Complex128
 
 	for idx in 1:length(recv_syms)
 		curr_chips = recv_chips[1+16(idx-1):16idx]
-		sym_corrs = sym_correlate(chips, curr_chips / maxabs(curr_chips))
 
-		#best_syms = [1:16;][sym_corrs .> (maximum(sym_corrs) - 1e-9)]
-		best_syms = Int[]
-		best_corr = 0
-
-		@inbounds for sym in 1:16
-			if sym_corrs[sym] > best_corr
-				best_syms = Int[sym]
-				best_corr = sym_corrs[sym]
-			elseif (best_corr - sym_corrs[sym]) < 1e-9
-				push!(best_syms, sym)
-			end
-		end
-
-		recv_syms[idx] = rand(best_syms)
+		sym_corrs = sym_correlate(curr_chips/maxabs(curr_chips))
+		recv_syms[idx] = sym_bestmatch(sym_corrs)
 	end
 
 	return recv_syms
 end
+# -----------------------------------------------------------------------------
+
+## Implements the correlate function from numpy for the "valid" setting
+## (http://docs.scipy.org/doc/numpy/reference/generated/numpy.correlate.html)
+#function sym_correlate{T<:Number}(a::Matrix{T}, v::Vector{T})
+#	real(sum(a.*conj(v), 1))'
+#end
+
+@inline function sym_correlate(chipseq::Vector{Complex128})
+	result = zeros(Complex128, 16)
+
+	@inbounds @simd for sym in 1:16
+		for idx in 1:16 # index in chip sequence
+			result[sym] += CHIPSEQ_MAPPING[idx, sym] * conj(chipseq[idx])
+		end
+	end
+
+	return abs(real(result))
+end
+# -----------------------------------------------------------------------------
+
+#function sym_bestmatch(sym_corrs::Vector{Float64})
+#	best_syms = [1:16;][sym_corrs .> (maximum(sym_corrs) - 1e-9)]  # alternative version
+
+#	return rand(best_syms)
+#end
+
+@inline function sym_bestmatch(sym_corrs::Vector{Float64})
+	best_syms = Int[]
+	best_corr = 0.0
+
+	@inbounds for sym in 1:16
+		if sym_corrs[sym] > best_corr
+			best_syms = Int[sym]
+			best_corr = sym_corrs[sym]
+		elseif isapprox(best_corr, sym_corrs[sym])
+			push!(best_syms, sym)
+		end
+	end
+
+	return rand(best_syms)
+end
+# -----------------------------------------------------------------------------
+
 
 end
