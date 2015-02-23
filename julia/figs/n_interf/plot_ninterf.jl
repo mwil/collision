@@ -21,8 +21,7 @@ using LaTeXStrings
 # -----------------------------------------------------------------------------
 
 function main()
-	if length(ARGS) == 0
-		# use the newest .npz file in the data directory for plotting
+	if length(ARGS) == 0 # use the newest .npz file in the data directory for plotting
 		do_plot(joinpath("data", sort(readdir("data"), by=(x)->splitext(x)[end]==".npz"?mtime(joinpath("data", x)):0.0)[end]))
 	else
 		for filename in ARGS

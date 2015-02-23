@@ -41,17 +41,15 @@ function do_gen(decision::String)
 
 	results = Dict("As"=>1.0, "nsyms"=>nsyms, "nsteps"=>nsteps, "pktlen"=>pktlen, "ninterf"=>ninterf)
 
-	for content in ("same", "unif")
-		for mode in ("1", "n")
-			PRR_S = dzeros(ninterf)
+	for content in ("same", "unif"), mode in ("1", "n")
+		PRR_S = dzeros(ninterf)
 
-			@sync @parallel for i=1:length(workers())
-				calcPRR!(PRR_S, content=content, decision=decision, mode=mode, τ=0.0,
-						 As=1.0, nsyms=nsyms, nsteps=nsteps, pktlen=pktlen)
-			end
-
-			results["PRR_S_$(content)_$(mode)"] = convert(Array, PRR_S)
+		@sync @parallel for i=1:length(workers())
+			calcPRR!(PRR_S, content=content, decision=decision, mode=mode, τ=0.0,
+					 As=1.0, nsyms=nsyms, nsteps=nsteps, pktlen=pktlen)
 		end
+
+		results["PRR_S_$(content)_$(mode)"] = convert(Array, PRR_S)
 	end
 
 	NPZ.npzwrite(joinpath("data", "ninf_$(decision).npz"), results)

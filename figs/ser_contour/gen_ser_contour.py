@@ -15,6 +15,7 @@
 
 from __future__ import print_function
 
+import argparse
 import os
 import sys
 
@@ -28,22 +29,28 @@ import tools
 #################      SETTINGS      #################
 ######################################################
 T = 1.0
-As = 1.0
-Au = np.sqrt(1e4)
-nsyms = 1000
-nsteps = 750
+nsteps = 256
 
-tau_range = np.linspace(-1.5*T, 1.5*T, num=nsteps)
-phi_range = np.linspace(-np.pi, np.pi, num=nsteps)
+settings = {
+	"As":     1.0,
+	"Au":     np.sqrt(1e4),
+	"nsyms":  256,
+	"nsteps": nsteps,
+
+	"tau_range": np.linspace(-1.5*T, 1.5*T, num=nsteps),
+	"phi_range": np.linspace(-np.pi, np.pi, num=nsteps)
+}
+
+globals().update(settings)
 ######################################################
 ######################################################
 
 def do_gen(content, decision):
-	SER_S, SER_U = None, None
+	SER_S = np.empty((tau_range.shape[0], phi_range.shape[0]))
+	SER_U = np.empty((tau_range.shape[0], phi_range.shape[0]))
 
-	for tau in tau_range:
+	for tau_idx, tau in enumerate(tau_range):
 		print("tau = %.2f" % (tau))
-		ser_s, ser_u = np.array([]), np.array([])
 
 		# symbols of (synch"ed, unsynch"ed) sender
 		if content in ("same",):
@@ -60,8 +67,8 @@ def do_gen(content, decision):
 
 		for phi_idx in range(len(phi_range)):
 			recv_chips       = np.empty(2*RECV_CHIPS_I.shape[0])
-			recv_chips[ ::2] = np.sign(RECV_CHIPS_I[:,phi_idx])
-			recv_chips[1::2] = np.sign(RECV_CHIPS_Q[:,phi_idx])
+			recv_chips[ ::2] = RECV_CHIPS_I[:,phi_idx]
+			recv_chips[1::2] = RECV_CHIPS_Q[:,phi_idx]
 
 			# slice bits to simulate hard decision decoder
 			if decision in ("hard",):
@@ -69,24 +76,20 @@ def do_gen(content, decision):
 
 			recv_syms = pt.detect_syms_corr(recv_chips)[1:-1]
 
-			ser_s = np.append(ser_s, sum(recv_syms != send_syms_s) / (1.0*len(recv_syms)))
-			ser_u = np.append(ser_u, sum(recv_syms != send_syms_u) / (1.0*len(recv_syms)))
-
-		if SER_S is None:
-			SER_S = ser_s
-			SER_U = ser_u
-		else:
-			SER_S = np.vstack((SER_S, ser_s))
-			SER_U = np.vstack((SER_U, ser_u))
+			SER_S[tau_idx, phi_idx] = sum(recv_syms != send_syms_s) / (1.0*len(recv_syms))
+			SER_U[tau_idx, phi_idx] = sum(recv_syms != send_syms_u) / (1.0*len(recv_syms))
 
 	np.savez_compressed("data/ser_Au%.2f_%s_%s_v2.npz"%(Au, content, decision),
-        tau_range=tau_range, phi_range=phi_range, As=As, Au=Au, SER_S=SER_S, SER_U=SER_U, nsyms=nsyms, nsteps=nsteps)
+                        SER_S=SER_S, SER_U=SER_U, **settings)
 
 if __name__ == "__main__":
-	input_params = (("content", ("same", "unif"), "Data content"), ("decision", ("hard", "soft"), "Bit decision"))
-	content, decision = tools.get_params(input_params)
+	argp = argparse.ArgumentParser()
+	argp.add_argument("content",  choices=("same", "unif"), help="Relation between data content in the two transmitted packets")
+	argp.add_argument("decision", choices=("soft", "hard"), help="Bit decision for DSSS decoding (SDD, HDD)")
 
-	if not tools.overwrite_ok("data/ser_u_Au%.2f_%s_%s.npy"%(Au, content, decision)):
+	args = argp.parse_args()
+
+	if not tools.overwrite_ok("data/ser_Au%.2f_%s_%s_v2.npz"%(Au, args.content, args.decision)):
 		sys.exit(0)
 
-	do_gen(content, decision)
+	do_gen(args.content, args.decision)

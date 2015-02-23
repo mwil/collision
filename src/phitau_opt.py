@@ -37,6 +37,19 @@ chips[None] = np.array([0]*32)
 
 chips_a = np.vstack([chips[i] for i in range(16)])
 
+
+def shift_indices(X, k):
+	length = len(X)
+
+	# fill negative indices with np.zeros (FIXED: k=0 also needs one zero at position -1!)
+	X = np.concatenate((X, np.zeros(max(1, 2*abs(k)))))
+
+	Xkn_i = np.roll(X, k+1)[:length]
+	Xk_i  = np.roll(X, k)  [:length]
+
+	return Xkn_i, Xk_i
+
+
 def detect_i(alpha, beta, phi_range, tau, As, Au):
 	"""Calculate the in-phase demodulation output for two colliding MSK signals s(t) and u(t).
 
@@ -64,56 +77,12 @@ def detect_i(alpha, beta, phi_range, tau, As, Au):
 		Signal amplitude of s(t).
 	Au
 		Signal amplitude of u(t).
-		Updated version: Au now can also be an array of Au values to speed things up with
-		3D calculations. [However, this requires too much memory and is not that much faster.]
 
 	Returns
 	-------
 	Scaled soft bit \hat{o}^I_k with values in range [-1,1].
 	"""
-	_tau_   = np.remainder(tau, 2*T)
-	_tau_n_ = np.remainder(tau+T, 2*T)
-	omega_p = np.pi/(2*T)
-	phi_p   = omega_p * tau
-
-	k_tau   = int(np.floor(tau / (2*T)))
-	k_tau_n = int(np.floor((tau+T) / (2*T)))
-
-	# fill negative indices with np.zeros (FIXED: k=0 also needs one zero at position -1!)
-	beta_i = np.concatenate((beta[0], np.zeros(max(1, 2*abs(k_tau)))))
-	beta_q = np.concatenate((beta[1], np.zeros(max(1, 2*abs(k_tau_n)))))
-
-	bkn_i = np.roll(beta_i, k_tau + 1)[:len(alpha[0])]
-	bk_i  = np.roll(beta_i, k_tau)[:len(alpha[0])]
-	bkn_q = np.roll(beta_q, k_tau_n + 1)[:len(alpha[0])]
-	bk_q  = np.roll(beta_q, k_tau_n)[:len(alpha[0])]
-
-	arg1 = np.cos(phi_p) * (_tau_ * bkn_i + (2*T - _tau_) * bk_i)
-	arg2 = ((2*T) / np.pi) * np.sin(phi_p) * (bkn_i - bk_i)
-	arg3 = np.sin(phi_p) * (_tau_n_ * bkn_q + (2*T - _tau_n_) * bk_q)
-	arg4 = ((2*T) / np.pi) * np.cos(phi_p) * (bkn_q - bk_q)
-
-	if isinstance(Au, np.ndarray):
-		PHI_C, ALPHA, AU = np.meshgrid(phi_range, alpha[0], Au)
-		ARG12 = np.meshgrid(phi_range, (arg1 - arg2), Au)[1]
-		ARG34 = np.meshgrid(phi_range, (arg3 + arg4), Au)[1]
-
-		result = (T/2) * ALPHA * As + (AU/4) * (np.cos(PHI_C) * ARG12 - np.sin(PHI_C) * ARG34)
-
-		return result / ((T/2) * As * AU)
-	else:
-		PHI_C, ALPHA = np.meshgrid(phi_range, alpha[0])
-		ARG12 = np.meshgrid(phi_range, (arg1 - arg2))[1]
-		ARG34 = np.meshgrid(phi_range, (arg3 + arg4))[1]
-
-		# TODO: fix Au in partial overlap! One strong chip can dominate the complete correlation of a symbol ...
-		result = (T/2) * ALPHA * As + (Au/4) * (np.cos(PHI_C) * ARG12 - np.sin(PHI_C) * ARG34)
-
-		# modified for Au only transmissions
-		if As != 0:
-			return result / ((T/2) * As * Au)
-		else:
-			return result / ((T/2) * Au)
+	return _detect(alpha[0], beta[0], beta[1], phi_range, tau, As, Au, tau_shift=T)
 
 
 def detect_q(alpha, beta, phi_range, tau, As, Au):
@@ -121,49 +90,38 @@ def detect_q(alpha, beta, phi_range, tau, As, Au):
 
 	See detect_i for details, this function yields results for \hat{o}^Q_k.
 	"""
-	_tau_   = np.remainder(tau, 2*T)
-	_tau_p_ = np.remainder(tau-T, 2*T)
+	return _detect(alpha[1], beta[1], beta[0], phi_range, tau, As, Au, tau_shift=-T)
+
+
+def _detect(alpha, beta_1, beta_2, phi_range, tau, As, Au, tau_shift):
 	omega_p = np.pi/(2*T)
 	phi_p   = omega_p * tau
 
-	k_tau   = int(np.floor(tau / (2*T)))
-	k_tau_p = int(np.floor((tau-T) / (2*T)))
+	tau_1_  = np.remainder(tau, 2*T)
+	tau_2_  = np.remainder(tau+tau_shift, 2*T)
+	k_tau_1 = int(np.floor(tau / (2*T)))
+	k_tau_2 = int(np.floor((tau+tau_shift) / (2*T)))
 
-	# fill negative indices with np.zeros
-	beta_i = np.concatenate((beta[0], np.zeros(max(1, 2*abs(k_tau_p)))))
-	beta_q = np.concatenate((beta[1], np.zeros(max(1, 2 * abs(k_tau)))))
+	bkn_1, bk_1 = shift_indices(beta_1, k_tau_1)
+	bkn_2, bk_2 = shift_indices(beta_2, k_tau_2)
 
-	bkn_i = np.roll(beta_i, k_tau_p + 1)[:len(alpha[1])]
-	bk_i  = np.roll(beta_i, k_tau_p)[:len(alpha[1])]
-	bkn_q = np.roll(beta_q, k_tau + 1)[:len(alpha[1])]
-	bk_q  = np.roll(beta_q, k_tau)[:len(alpha[1])]
+	arg1 = np.cos(phi_p) * (tau_1_ * bkn_1 + (2*T - tau_1_) * bk_1)
+	arg2 = ((2*T) / np.pi) * np.sin(phi_p) * (bkn_1 - bk_1)
+	arg3 = np.sin(phi_p) * (tau_2_ * bkn_2 + (2*T - tau_2_) * bk_2)
+	arg4 = ((2*T) / np.pi) * np.cos(phi_p) * (bkn_2 - bk_2)
 
-	arg1 = np.cos(phi_p) * (_tau_ * bkn_q + (2*T - _tau_) * bk_q)
-	arg2 = ((2*T) / np.pi) * np.sin(phi_p) * (bkn_q - bk_q)
-	arg3 = np.sin(phi_p) * (_tau_p_ * bkn_i + (2*T - _tau_p_) * bk_i)
-	arg4 = ((2*T) / np.pi) * np.cos(phi_p) * (bkn_i - bk_i)
+	PHI_C, ALPHA = np.meshgrid(phi_range, alpha)
+	ARG12 = np.meshgrid(phi_range, (arg1 - arg2))[1]
+	ARG34 = np.meshgrid(phi_range, (arg3 + arg4))[1]
 
-	if isinstance(Au, np.ndarray):
-		PHI_C, ALPHA, AU = np.meshgrid(phi_range, alpha[1], Au)
-		ARG12 = np.meshgrid(phi_range, (arg1 - arg2), Au)[1]
-		ARG34 = np.meshgrid(phi_range, (arg3 + arg4), Au)[1]
+	# TODO: fix Au in partial overlap! One strong chip can dominate the complete correlation of a symbol ...
+	result = (T/2) * ALPHA * As + (Au/4) * (np.cos(PHI_C) * ARG12 - np.sin(PHI_C) * ARG34)
 
-		result = (T/2) * ALPHA * As + (AU/4) * (np.cos(PHI_C) * ARG12 - np.sin(PHI_C) * ARG34)
-
-		return result / ((T/2) * As * AU)
+	# modified for Au only transmissions
+	if As > 0:
+		return result / ((T/2) * As * Au)
 	else:
-		PHI_C, ALPHA = np.meshgrid(phi_range, alpha[1])
-		ARG12 = np.meshgrid(phi_range, (arg1 - arg2))[1]
-		ARG34 = np.meshgrid(phi_range, (arg3 + arg4))[1]
-
-		# TODO: fix Au in partial overlap! One strong chip can dominate the complete correlation of a symbol ...
-		result = (T/2) * ALPHA * As + (Au/4) * (np.cos(PHI_C) * ARG12 - np.sin(PHI_C) * ARG34)
-
-		# modified for Au only transmissions
-		if As != 0:
-			return result / ((T/2) * As * Au)
-		else:
-			return result / ((T/2) * Au)
+		return result / ((T/2) * Au)
 
 
 def map_chips(syncsyms, usyms):
@@ -230,6 +188,7 @@ def detect_syms_corr(recv_chips):
 				continue
 
 			curr_corr, = np.abs(np.correlate(chips[sym], curr_chips))
+			#print("sym:",sym, "corr: ", curr_corr)
 
 			if curr_corr >= 32/2.:
 				# correlation is bigger than 0.5, this can only happen with one sequence

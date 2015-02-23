@@ -21,8 +21,7 @@ using LaTeXStrings
 # -----------------------------------------------------------------------------
 
 function main()
-	if length(ARGS) == 0
-		# use the newest .npz file in the data directory for plotting
+	if length(ARGS) == 0 # use the newest .npz file in the data directory for plotting
 		do_plot(joinpath("data", sort(readdir("data"), by=(x)->splitext(x)[end]==".npz"?mtime(joinpath("data", x)):0.0)[end]))
 	else
 		for filename in ARGS
@@ -45,7 +44,9 @@ function do_plot(filename::String)
 
 	plt.clf()
 
-	Cf = plt.contourf(τ_range, As_range_dB, PRR_S, levels=(0.0, 0.1, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0), colors=("1.0", "0.85", "0.75", "0.65", "0.5", "0.35", "0.0"), origin="lower")
+	Cf = plt.contourf(τ_range, As_range_dB, PRR_S, 
+			levels=(0.0, 0.1, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0), 
+			colors=("1.0", "0.85", "0.75", "0.65", "0.5", "0.35", "0.0"), origin="lower")
 	#plt.contour(Cf,  colors = ("r",)*5+("w",), linewidths=(0.75,)*5+(1.0,), origin="lower", hold="on")
 
 	plt.xlabel(L"Time offset $\tau$ ($/T$)", labelpad=2)

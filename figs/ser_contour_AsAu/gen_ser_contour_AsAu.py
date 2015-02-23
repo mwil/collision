@@ -121,7 +121,7 @@ def do_gen(part, content, decision, wide, numthreads):
 			PRR_U[tau_idx, Au_idx] = np.mean((1.0-SER_U_PHI[tau_idx,:])**pktlen)
 
 	np.savez_compressed("data/prr_AsAu_%s_%s%s_part%i.npz"%(content, decision, wide, part),
-		PRR_S=PRR_S, PRR_U=PRR_U, SER_S_PHI=SER_S_PHI, SER_U_PHI=SER_U_PHI)
+						PRR_S=PRR_S, PRR_U=PRR_U, **settings)
 
 
 
@@ -148,7 +148,6 @@ if __name__ == "__main__":
 	pool.map(partial(do_gen, content=args.content, decision=args.decision, wide=wide, numthreads=args.numthreads), list(range(args.numthreads)))
 
 	PRR_S, PRR_U = None, None
-	SER_S_PHI, SER_U_PHI = None, None
 
 	tau_range   = (tau_range_wide   if wide else tau_range_norm)
 	Au_range    = (Au_range_wide    if wide else Au_range_norm)
@@ -158,7 +157,7 @@ if __name__ == "__main__":
 	for part in range(args.numthreads):
 		data = np.load("data/prr_AsAu_%s_%s%s_part%i.npz"%(args.content, args.decision, wide, part))
 
-		for vname in ("PRR_S", "PRR_U", "SER_S_PHI", "SER_U_PHI"):
+		for vname in ("PRR_S", "PRR_U"):
 			if locals()[vname] is None:
 				locals()[vname] = data[vname]
 			else:
