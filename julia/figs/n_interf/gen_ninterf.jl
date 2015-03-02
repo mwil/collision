@@ -34,7 +34,7 @@ end
 
 function do_gen(decision::String)
 	const T = 1.0
-	const nsyms = 2^9
+	const nsyms = 2^10
 	const nsteps = 2^10
 	const pktlen = 16
 	const ninterf = 20
@@ -112,7 +112,7 @@ end
 		if decision == "hard"
 			RECV_CHIPS = complex(sign(real(RECV_CHIPS)), sign(imag(RECV_CHIPS)))
 		end
-		
+
 		for 𝜑_idx in 1:nsteps
 			pt.detect_syms_corr!(recv_syms, RECV_CHIPS[:,𝜑_idx])
 
