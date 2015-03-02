@@ -35,8 +35,7 @@ def _plot_sync(content, decision, wide):
 	global style
 	style.apply("sync", content, decision, wide)
 
-	data    = np.load("data/prr_AsAu_%s_%s%s.npz"%(content, decision, wide))
-	data_bc = np.load("../ber_contour_AsAu/data/prr_AsAu_%s%s.npz"%(content, wide))
+	data = np.load("data/prr_AsAu_%s_%s%s.npz"%(content, decision, wide))
 
 	AU, TAU = np.meshgrid(-data["Au_range_dB"], data["tau_range"])
 
@@ -45,17 +44,21 @@ def _plot_sync(content, decision, wide):
 
 	assert TAU.shape == AU.shape == data["PRR_S"].shape, "The inputs TAU, AU, PRR_S must have the same shape for plotting!"
 
-	CSf = plt.contourf(TAU, AU, data["PRR_S"], levels=(0.0, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0), colors=("1.0", "0.5", "0.25", "0.15", "0.05", "0.0"), origin="lower")
+	CSf = plt.contourf(TAU, AU, data["PRR_S"].T, levels=(0.0, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0), colors=("1.0", "0.5", "0.25", "0.15", "0.05", "0.0"), origin="lower")
 	CS2 = plt.contour(CSf,  colors = ("r",)*5+("w",), linewidths=(0.75,)*5+(1.0,), origin="lower", hold="on")
 
-	CS_bc = plt.contour(TAU, AU, data_bc["PRR_S"], levels=(0.9,), colors="w", origin="lower", hold="on")
+	try:
+		data_bc = np.load("../ber_contour_AsAu/data/prr_AsAu_%s%s.npz"%(content, wide))
+		CS_bc = plt.contour(TAU, AU, data_bc["PRR_S"], levels=(0.9,), colors="w", origin="lower", hold="on")
+	except IOError:
+		print("File not found for BER, skipping ...")
 
 	style.annotate("sync", content, decision, wide)
 
 	plt.xlabel(r"Time offset $\tau$ ($/T$)", labelpad=2)
 	plt.ylabel(r"Signal power ratio ($\mathrm{SIR}$)", labelpad=2)
 
-	plt.savefig("pdf/prr_sync_%s_%s%s_z.pdf"%(content, decision, wide))
+	#plt.savefig("pdf/prr_sync_%s_%s%s_z.pdf"%(content, decision, wide))
 
 
 
