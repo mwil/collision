@@ -32,17 +32,17 @@ nsteps         = 1024
 num_interferer = 8
 
 settings = {
-    "T":      1.0,
-    "tau":    0.0,
-    "As":     1.0,
-    "Au":     1./np.sqrt(2),
-    "Au_":    1./np.sqrt(2),
-    "nsyms":  256,
+	"T":      1.0,
+	"tau":    0.0,
+	"As":     1.0,
+	"Au":     1./np.sqrt(2),
+	"Au_":    1./np.sqrt(2),
+	"nsyms":  1024,
 	"nsteps": nsteps,
-    "pktlen": 16,
+	"pktlen": 16,
 	"num_interferer": num_interferer,
 
-    "phi_range": None
+	"phi_range": None
 }
 
 globals().update(settings)

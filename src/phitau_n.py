@@ -121,7 +121,7 @@ def map_chips_n(vsyms, *args):
 	chips_i, chips_q = {}, {}
 
 	# Split chipping sequences in I and Q
-	for sym in chips.iterkeys():
+	for sym in chips.keys():
 		chips_i[sym] = chips[sym][ ::2]
 		chips_q[sym] = chips[sym][1::2]
 

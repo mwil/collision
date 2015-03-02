@@ -54,7 +54,7 @@ def plot():
 	print("DEBUG: If 'Inputs x and y must be 1D or 2D.' -> Shape mismatch PHI, TAU, Z: ", PHI.shape, TAU.shape, Z.shape)
 
 	CSf  = plt.contourf(TAU, PHI/np.pi, Z, levels=(0.0, 1e-3, 0.25, 0.9, 1.0), colors=("0.0", "0.5", "0.75", "1."), origin="lower")
-	CS2 = plt.contour(CSf, levels=(0.9, 0.25, 1e-3), colors=2*("r",)+("w",), linewidths=(0., 0.75, 1.0), origin="lower", hold="on")
+	CS2 = plt.contour(CSf, levels=(0.9, 0.25, 1e-3), colors=("1.0", "r", "w"), linewidths=(0., 0.75, 1.0), origin="lower", hold="on")
 
 	plt.axis([-1.5, 1.5, -1, 1])
 	plt.xlabel(r"Time offset $\tau$ ($/T$)", labelpad=2)
