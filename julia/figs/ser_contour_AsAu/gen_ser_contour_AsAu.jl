@@ -16,9 +16,10 @@
 import NPZ
 
 push!(LOAD_PATH, "../../src")
-
 import PhiTau
 @everywhere const pt = PhiTau
+
+@everywhere using DistributedArrays
 
 # -----------------------------------------------------------------------------
 

@@ -14,12 +14,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import NPZ
-@everywhere using DistributedArrays
 
 push!(LOAD_PATH, "../../src")
-
 import PhiTau
 @everywhere const pt = PhiTau
+
+@everywhere using DistributedArrays
 
 # -----------------------------------------------------------------------------
 
