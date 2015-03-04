@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import NPZ
+@everywhere using DistributedArrays
 
 push!(LOAD_PATH, "../../src")
 
@@ -30,15 +31,25 @@ function main()
 	end
 end
 
+function main_vid()
+	if length(ARGS) == 2
+		for SIR in -30:10
+			do_gen(ARGS...; SIR=SIR)
+		end
+	else
+		println("Two required arguments: content={same,unif}, decision={hard,soft}")
+	end
+end
+
 # -----------------------------------------------------------------------------
 
-function do_gen(content::String, decision::String)
+function do_gen(content::String, decision::String; SIR=-16.0)
 	const T  = 1.0
-	const Au = √100
-	const nsyms  = 2^11
-	const nsteps = 2^8
+	const Au = √(10^(-SIR/10))
+	const nsyms  = 2^12
+	const nsteps = 2^9
 
-	const τ_range = linspace(-3T, 3T, nsteps)
+	const τ_range = linspace(-2.5T, 2.5T, nsteps)
 	const 𝜑_range = linspace( -π,  π, nsteps)
 
 	SER_S = dzeros(length(𝜑_range), length(τ_range))
@@ -48,7 +59,7 @@ function do_gen(content::String, decision::String)
 		calcSER!(SER_S, SER_U, content, decision, τ_range, 𝜑_range, As=1.0, Au=Au, nsyms=nsyms)
 	end
 
-	NPZ.npzwrite("data/serc_$(content)_$(decision).npz",
+	NPZ.npzwrite("data/serc_$(content)_$(decision)_SIR_$(round(Int, SIR)).npz",
 				 Dict("SER_S"=>convert(Array, SER_S), "SER_U"=>convert(Array, SER_U),
 					  "tau_range"=>τ_range, "phi_range"=>𝜑_range,
 					  "As"=>1.0, "Au"=>Au, "nsyms"=>nsyms, "nsteps"=>nsteps))
@@ -56,7 +67,7 @@ end
 
 # -----------------------------------------------------------------------------
 
-@everywhere function calcSER!(dSER_S::DArray, dSER_U::DArray, content::String, decision::String, 
+@everywhere function calcSER!(dSER_S::DArray, dSER_U::DArray, content::String, decision::String,
 		τ_range::Vector{Float64}, 𝜑_range::Vector{Float64}; As=1.0, Au=√100, nsyms=2^11)
 
 	if !(content in ("same", "unif"))
@@ -94,11 +105,12 @@ end
 			pt.map_chips!(β_send_chips, β_send_syms)
 		end
 
-		RECV_CHIPS = As*α_send_chips .+ Au*pt.Λu(β_send_chips, 𝜑_range, τ)
+		RECV_CHIPS = As*α_send_chips .+ Au*pt.Λu(β_send_chips, 𝜑_range[lidx[1]], τ)
 
 		if decision == "hard"
 			RECV_CHIPS = complex(sign(real(RECV_CHIPS)), sign(imag(RECV_CHIPS)))
 		end
+
 		tic()
 		for 𝜑_idx in 1:length(lidx[1])
 			pt.detect_syms_corr!(recv_syms, RECV_CHIPS[:,𝜑_idx])
@@ -112,4 +124,4 @@ end
 
 # -----------------------------------------------------------------------------
 
-main()
+main_vid()

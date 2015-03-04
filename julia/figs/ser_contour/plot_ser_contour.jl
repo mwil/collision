@@ -23,7 +23,8 @@ using LaTeXStrings
 function main()
 	if length(ARGS) == 0
 		# use the newest .npz file in the data directory for plotting
-		do_plot(joinpath("data", sort(readdir("data"), by=(x)->splitext(x)[end]==".npz"?mtime(joinpath("data", x)):0.0)[end]))
+		do_plot(joinpath("data", sort(readdir("data"), 
+			by=(x)->splitext(x)[end]==".npz"?mtime(joinpath("data", x)):0.0)[end]))
 	else
 		for filename in ARGS
 			if splitext(filename)[end] == ".npz"
@@ -43,7 +44,10 @@ function do_plot(filename::String)
 	𝜑_range = data["phi_range"]
 
 	plt.clf()
-	Cf = plt.contourf(τ_range, 𝜑_range/π, SER_U, levels=(0.0, 1e-3, 0.25, 0.9, 1.0), colors=("0.0", "0.5", "0.75", "1."), origin="lower")
+	plt.grid()
+	Cf = plt.contourf(τ_range, 𝜑_range/π, SER_U, 
+			levels=(0.0, 1e-3, 0.25, 0.9, 1.0), 
+			colors=("0.0", "0.5", "0.75", "1."), origin="lower")
 	#plt.contour(Cf, colors=("r","r","w"), linewidths=(0., 0.75, 1.0), origin="lower", hold="on")
 
 	plt.xlabel(L"Time offset $\tau$ ($/T$)", labelpad=2)

@@ -41,12 +41,12 @@ function do_gen(content::String, decision::String)
 	const τ_range  = linspace(-1.5T, 1.5T, nsteps)
 	const Au_range = √logspace(-1, 5, nsteps)
 	const 𝜑_range  = linspace(-π, π, nsteps)
-	
+
 	PRR_S = dzeros(length(Au_range), length(τ_range))
 	PRR_U = dzeros(length(Au_range), length(τ_range))
 
 	@sync @parallel for i=1:length(workers())
-		calcPRR!(PRR_S, PRR_U, content, decision, τ_range, Au_range, 𝜑_range, 
+		calcPRR!(PRR_S, PRR_U, content, decision, τ_range, Au_range, 𝜑_range,
 				 As=1.0, nsyms=nsyms, nsteps=nsteps, pktlen=pktlen)
 	end
 
@@ -58,8 +58,8 @@ end
 
 # -----------------------------------------------------------------------------
 
-@everywhere function calcPRR!(dPRR_S::DArray, dPRR_U::DArray, content::String, decision::String, 
-		τ_range::Vector{Float64}, Au_range::Vector{Float64}, 𝜑_range::Vector{Float64}; 
+@everywhere function calcPRR!(dPRR_S::DArray, dPRR_U::DArray, content::String, decision::String,
+		τ_range::Vector{Float64}, Au_range::Vector{Float64}, 𝜑_range::Vector{Float64};
 		As=1.0, nsyms=2^8, nsteps=2^7, pktlen=8)
 
 	if !(content in ("same", "unif"))
@@ -101,14 +101,14 @@ end
 
 		recv_chips = pt.Λu(β_send_chips, 𝜑_range, τ)
 
-		for (Au_idx, Au) in enumerate(Au_range)
+		for (Au_idx, Au) in enumerate(Au_range[lidx[1]])
 			RECV_CHIPS = As*α_send_chips .+ Au*recv_chips
 
 			if decision == "hard"
 				RECV_CHIPS = complex(sign(real(RECV_CHIPS)), sign(imag(RECV_CHIPS)))
 			end
-			
-			for 𝜑_idx in 1:length(lidx[1])
+
+			for 𝜑_idx in 1:nsteps
 				pt.detect_syms_corr!(recv_syms, RECV_CHIPS[:,𝜑_idx])
 
 				ser_s[𝜑_idx] = countnz(recv_syms .≠ α_send_syms)/nsyms
