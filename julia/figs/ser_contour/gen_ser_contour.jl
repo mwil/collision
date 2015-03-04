@@ -43,7 +43,7 @@ end
 
 # -----------------------------------------------------------------------------
 
-function do_gen(content::String, decision::String; SIR=-16.0)
+function do_gen(content::String, decision::String; SIR=-20.0)
 	const T  = 1.0
 	const Au = √(10^(-SIR/10))
 	const nsyms  = 2^12
@@ -68,7 +68,7 @@ end
 # -----------------------------------------------------------------------------
 
 @everywhere function calcSER!(dSER_S::DArray, dSER_U::DArray, content::String, decision::String,
-		τ_range::Vector{Float64}, 𝜑_range::Vector{Float64}; As=1.0, Au=√100, nsyms=2^11)
+		τ_range::Vector{Float64}, 𝜑_range::Vector{Float64}; As=1.0, Au=√100, nsyms=2^10, nsteps=2^8)
 
 	if !(content in ("same", "unif"))
 		throw(ArgumentError("Content must be in {same, unif}"))

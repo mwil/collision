@@ -108,11 +108,13 @@ function detect_syms_corr!(recv_syms::Vector{Int}, recv_chips::Vector{Complex128
 		throw(DimensionMismatch("Input recv_chips contains an incomplete chipping sequence (<16 chips)!"))
 	end
 
+	sym_corrs = zeros(Complex128, 16)
+
 	for idx in 1:length(recv_syms)
 		curr_chips = recv_chips[1+16(idx-1):16idx]
 
-		sym_corrs = sym_correlate(curr_chips/maxabs(curr_chips))
-		recv_syms[idx] = sym_bestmatch(sym_corrs)
+		sym_correlate!(sym_corrs, curr_chips/maxabs(curr_chips))
+		recv_syms[idx] = sym_bestmatch(abs(real(sym_corrs)))
 	end
 
 	return recv_syms
@@ -125,16 +127,14 @@ end
 #	real(sum(a.*conj(v), 1))'
 #end
 
-@inline function sym_correlate(chipseq::Vector{Complex128})
-	result = zeros(Complex128, 16)
-
+@inline function sym_correlate!(result::Vector{Complex128}, chipseq::Vector{Complex128})
 	@inbounds @simd for sym in 1:16
 		for idx in 1:16 # index in chip sequence
 			result[sym] += CHIPSEQ_MAPPING[idx, sym] * conj(chipseq[idx])
 		end
 	end
 
-	return abs(real(result))
+	return result
 end
 # -----------------------------------------------------------------------------
 
