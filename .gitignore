@@ -40,3 +40,6 @@ nosetests.xml
 
 # OSX stuff
 .DS_Store
+
+# Linux stuff
+.directory

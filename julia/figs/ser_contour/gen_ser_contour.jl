@@ -33,7 +33,7 @@ end
 
 function main_vid()
 	if length(ARGS) == 2
-		for SIR in -30:10
+		for SIR in -30:3
 			do_gen(ARGS...; SIR=SIR)
 		end
 	else
@@ -124,4 +124,4 @@ end
 
 # -----------------------------------------------------------------------------
 
-main_vid()
+main()

@@ -128,9 +128,11 @@ end
 #end
 
 @inline function sym_correlate!(result::Vector{Complex128}, chipseq::Vector{Complex128})
-	@inbounds @simd for sym in 1:16
-		for idx in 1:16 # index in chip sequence
-			result[sym] += CHIPSEQ_MAPPING[idx, sym] * conj(chipseq[idx])
+	for sym in 1:16
+		@inbounds result[sym] = 0
+
+		@simd for idx in 1:16 # index in chip sequence
+			@inbounds result[sym] += CHIPSEQ_MAPPING[idx, sym] * conj(chipseq[idx])
 		end
 	end
 
@@ -148,7 +150,7 @@ end
 	best_syms = Int[]
 	best_corr = 0.0
 
-	@inbounds for sym in 1:16
+	for sym in 1:16
 		if sym_corrs[sym] > best_corr
 			best_syms = Int[sym]
 			best_corr = sym_corrs[sym]
