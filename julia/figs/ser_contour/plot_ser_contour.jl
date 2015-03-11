@@ -23,7 +23,7 @@ using LaTeXStrings
 function main()
 	if length(ARGS) == 0
 		# use the newest .npz file in the data directory for plotting
-		do_plot(joinpath("data", sort(readdir("data"), 
+		do_plot(joinpath("data", sort(readdir("data"),
 			by=(x)->splitext(x)[end]==".npz"?mtime(joinpath("data", x)):0.0)[end]))
 	else
 		for filename in ARGS
@@ -45,8 +45,8 @@ function do_plot(filename::String)
 
 	plt.clf()
 	plt.grid()
-	Cf = plt.contourf(τ_range, 𝜑_range/π, SER_U, 
-			levels=(0.0, 1e-3, 0.25, 0.9, 1.0), 
+	Cf = plt.contourf(τ_range, 𝜑_range/π, SER_U,
+			levels=(0.0, 1e-3, 0.25, 0.9, 1.0),
 			colors=("0.0", "0.5", "0.75", "1."), origin="lower")
 	#plt.contour(Cf, colors=("r","r","w"), linewidths=(0., 0.75, 1.0), origin="lower", hold="on")
 
@@ -54,6 +54,7 @@ function do_plot(filename::String)
 	plt.ylabel(L"Carrier phase offset $\varphi_c$ ($/\pi$)", labelpad=0)
 
 	plt.savefig("pdf/$(splitext(splitdir(filename)[end])[1]).pdf", bbox_inches="tight")
+	#plt.savefig("png/$(splitext(splitdir(filename)[end])[1]).png", bbox_inches="tight")
 end
 # -----------------------------------------------------------------------------
 

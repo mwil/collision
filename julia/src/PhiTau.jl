@@ -131,8 +131,8 @@ end
 	for sym in 1:16
 		@inbounds result[sym] = 0
 
-		@simd for idx in 1:16 # index in chip sequence
-			@inbounds result[sym] += CHIPSEQ_MAPPING[idx, sym] * conj(chipseq[idx])
+		@inbounds @simd for idx in 1:16 # index in chip sequence
+			result[sym] += CHIPSEQ_MAPPING[idx, sym] * conj(chipseq[idx])
 		end
 	end
 

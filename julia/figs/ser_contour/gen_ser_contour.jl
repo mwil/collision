@@ -33,7 +33,7 @@ end
 
 function main_vid()
 	if length(ARGS) == 2
-		for SIR in -30:3
+		for SIR in 1:3#-30:3
 			do_gen(ARGS...; SIR=SIR)
 		end
 	else
@@ -59,7 +59,7 @@ function do_gen(content::String, decision::String; SIR=-20.0)
 		calcSER!(SER_S, SER_U, content, decision, τ_range, 𝜑_range, As=1.0, Au=Au, nsyms=nsyms)
 	end
 
-	NPZ.npzwrite("data/serc_$(content)_$(decision)_SIR_$(round(Int, SIR)).npz",
+	NPZ.npzwrite("data/serc_$(content)_$(decision)_SIR_$(@sprintf("%+03i", round(Int, SIR))).npz",
 				 Dict("SER_S"=>convert(Array, SER_S), "SER_U"=>convert(Array, SER_U),
 					  "tau_range"=>τ_range, "phi_range"=>𝜑_range,
 					  "As"=>1.0, "Au"=>Au, "nsyms"=>nsyms, "nsteps"=>nsteps))
@@ -124,4 +124,4 @@ end
 
 # -----------------------------------------------------------------------------
 
-main()
+main_vid()
