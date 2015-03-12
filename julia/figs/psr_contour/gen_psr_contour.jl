@@ -32,9 +32,9 @@ end
 function do_gen()
 	const T  = 1.0
 	const nsyms  = 2^10
-	const nsteps = 2^8
+	const nsteps = 2^9
 
-	const τ_range = linspace(-2.5T, 2.5T, nsteps)
+	const τ_range = linspace(-3T, 3T, nsteps)
 	const 𝜑_range = linspace( -π,  π, nsteps)
 
 	PSR_U = dzeros(length(𝜑_range), length(τ_range))
@@ -43,7 +43,7 @@ function do_gen()
 		calcPSR!(PSR_U, τ_range, 𝜑_range; nsyms=nsyms)
 	end
 
-	NPZ.npzwrite("data/psr.npz", Dict("PSR_U"=>convert(Array, PSR_U),
+	NPZ.npzwrite("data/psr_min.npz", Dict("PSR_U"=>convert(Array, PSR_U),
 				 "tau_range"=>τ_range, "phi_range"=>𝜑_range, "nsyms"=>nsyms, "nsteps"=>nsteps))
 end
 
@@ -65,7 +65,11 @@ end
 		RECV_CHIPS = pt.Λu(β_send_chips, 𝜑_range[lidx[1]], τ)
 
 		for 𝜑_idx in 1:length(lidx[1])
-			PSR_U[𝜑_idx,τ_idx] = 20*log10(mean(abs(real(RECV_CHIPS[:,𝜑_idx]))))
+			smallest = minimum(abs(real(RECV_CHIPS[:,𝜑_idx])))
+			PSR_U[𝜑_idx,τ_idx] = 20*log10(isapprox(smallest, 0)?1e-6:smallest)
+
+			#avg = mean(abs(real(RECV_CHIPS[:,𝜑_idx])))
+			#PSR_U[𝜑_idx,τ_idx] = 20*log10(isapprox(avg, 0)?1e-6:avg)
 		end
 	end
 	println(minimum(PSR_U))
