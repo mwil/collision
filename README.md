@@ -21,11 +21,11 @@ For `julia`, you need
 - the release version (v0.5) of Julia
 - package `NPZ` (to read and write numpy data files)
 - `PyPlot` (to call matplotlib from julia)
-- `DistributedArrays`
+- `DistributedArrays` (for speed up by parallel computations)
 
-Run it like this to enable parallel execution on worker threads:
+Run it like this to enable parallel execution on worker threads (inside the subfolders in the `figs` folder):
 
-`$ julia --depwarn=no -O -p [n_CPUs] gen_ser_contour.jl unif soft`
+`$ julia -O 3 -p auto gen_ser_contour.jl unif soft`
 
 ### Example Outputs
 #### BER Contour Plot
