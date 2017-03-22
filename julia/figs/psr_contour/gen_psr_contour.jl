@@ -43,13 +43,23 @@ function do_gen()
 		calcPSR!(PSR_U, τ_range, 𝜑_range; nsyms=nsyms)
 	end
 
-	NPZ.npzwrite("data/psr_min.npz", Dict("PSR_U"=>convert(Array, PSR_U),
-				 "tau_range"=>τ_range, "phi_range"=>𝜑_range, "nsyms"=>nsyms, "nsteps"=>nsteps))
+	NPZ.npzwrite("data/psr_min.npz",
+	   Dict(
+	      "PSR_U"=>convert(Array, PSR_U),
+			"tau_range"=>convert(Array, τ_range),
+			"phi_range"=>convert(Array, 𝜑_range),
+			"nsyms"=>nsyms,
+			"nsteps"=>nsteps))
 end
 
 # -----------------------------------------------------------------------------
 
-@everywhere function calcPSR!(dPSR_U::DArray, τ_range::Vector{Float64}, 𝜑_range::Vector{Float64}; nsyms=2^10)
+@everywhere function calcPSR!(
+      dPSR_U::DArray,
+      τ_range::AbstractVector{Float64},
+      𝜑_range::AbstractVector{Float64}
+      ; nsyms=2^10)
+
 	PSR_U = localpart(dPSR_U)
 	lidx = localindexes(dPSR_U)
 
@@ -57,7 +67,7 @@ end
 	β_send_chips = zeros(Complex128, 16*nsyms)
 
 	for (τ_idx, τ) in enumerate(τ_range[lidx[2]])
-		println("τ = ", @sprintf("% .3f", τ), ". Worker progress: ", @sprintf("%6.2f", 100.τ_idx/length(lidx[2])), "%")
+		println("τ = ", @sprintf("% .3f", τ), ". Worker progress: ", @sprintf("%6.2f", 100.0τ_idx/length(lidx[2])), "%")
 
 		rand!(β_send_syms, 1:16)
 		pt.map_chips!(β_send_chips, β_send_syms)
@@ -78,3 +88,4 @@ end
 # -----------------------------------------------------------------------------
 
 main()
+

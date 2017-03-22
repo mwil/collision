@@ -1,4 +1,4 @@
-# Copyright 2015 Matthias Wilhelm
+# Copyright 2015-2017 Matthias Wilhelm
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -47,7 +47,8 @@ function do_plot(filename::String)
 	plt.grid()
 	Cf = plt.contourf(τ_range, 𝜑_range/π, SER_U,
 			levels=(0.0, 1e-3, 0.25, 0.9, 1.0),
-			colors=("0.0", "0.5", "0.75", "1."), origin="lower")
+			colors=("0.0", "0.5", "0.75", "1."),
+			origin="lower")
 	#plt.contour(Cf, colors=("r","r","w"), linewidths=(0., 0.75, 1.0), origin="lower", hold="on")
 
 	plt.xlabel(L"Time offset $\tau$ ($/T$)", labelpad=2)
@@ -59,5 +60,5 @@ end
 # -----------------------------------------------------------------------------
 
 
-
 main()
+

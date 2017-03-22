@@ -1,4 +1,4 @@
-# Copyright 2015 Matthias Wilhelm
+# Copyright 2015-2017 Matthias Wilhelm
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,9 @@ using LaTeXStrings
 
 function main()
 	if length(ARGS) == 0 # use the newest .npz file in the data directory for plotting
-		do_plot(joinpath("data", sort(readdir("data"), by=(x)->splitext(x)[end]==".npz"?mtime(joinpath("data", x)):0.0)[end]))
+		do_plot(joinpath("data",
+		                 sort(readdir("data"),
+		                      by=(x)->splitext(x)[end]==".npz"?mtime(joinpath("data", x)):0.0)[end]))
 	else
 		for filename in ARGS
 			if splitext(filename)[end] == ".npz"
@@ -49,7 +51,8 @@ function do_plot(filename::String)
 	plt.plot(0:data["ninterf"], prepend!(data["PRR_S_unif_n"], [1.0]), "r^-")
 	plt.plot(0:data["ninterf"], prepend!(data["PRR_S_unif_1"], [1.0]), "ro-")
 
-	# proxy artists to get black markers http://www.mail-archive.com/matplotlib-users@lists.sourceforge.net/msg25195.html
+	# proxy artists to get black markers
+   # http://www.mail-archive.com/matplotlib-users@lists.sourceforge.net/msg25195.html
 	#l1, = ax.plot(1:data["ninterf"], data["PRR_S_unif_1"], "k^")
 	#l2, = ax.plot(1:data["ninterf"], data["PRR_S_unif_1"], "ko")
 	#l1.remove()
@@ -64,3 +67,4 @@ end
 
 
 main()
+

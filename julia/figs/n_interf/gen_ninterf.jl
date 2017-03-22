@@ -1,4 +1,4 @@
-# Copyright 2015 Matthias Wilhelm
+# Copyright 2015-2017 Matthias Wilhelm
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,8 +46,9 @@ function do_gen(decision::String)
 		PRR_S = dzeros(ninterf)
 
 		@sync @parallel for i=1:length(workers())
-			calcPRR!(PRR_S, content=content, decision=decision, mode=mode, τ=0.0,
-					 As=1.0, nsyms=nsyms, nsteps=nsteps, pktlen=pktlen)
+			calcPRR!(PRR_S,
+			   content=content, decision=decision, mode=mode, τ=0.0,
+				As=1.0, nsyms=nsyms, nsteps=nsteps, pktlen=pktlen)
 		end
 
 		results["PRR_S_$(content)_$(mode)"] = convert(Array, PRR_S)
@@ -58,8 +59,13 @@ end
 
 # -----------------------------------------------------------------------------
 
-@everywhere function calcPRR!(dPRR_S::DArray; content="unif", decision="soft", mode="1",
-							  As=1.0, τ=0.0, nsyms=2^8, nsteps=2^7, pktlen=8)
+@everywhere function calcPRR!(
+      dPRR_S::DArray
+      ;
+      content="unif",
+      decision="soft",
+      mode="1",
+		As=1.0, τ=0.0, nsyms=2^8, nsteps=2^7, pktlen=8)
 
 	if !(content in ("same", "unif"))
 		throw(ArgumentError("Content must be in {same, unif}"))
@@ -97,7 +103,8 @@ end
 			β_send_chips = α_send_chips
 		end
 
-		RECV_CHIPS = As*α_send_chips
+      # Fixed: should also have an axis along the φ values
+		RECV_CHIPS = repeat(As*α_send_chips, outer=(1, nsteps))
 
 		for inf in 1:ninterf
 			if content == "unif"
@@ -126,3 +133,4 @@ end
 # -----------------------------------------------------------------------------
 
 main()
+

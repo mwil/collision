@@ -1,4 +1,4 @@
-# Copyright 2015 Matthias Wilhelm
+# Copyright 2015-2017 Matthias Wilhelm
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,12 +25,14 @@ tmp_chips = zeros(Complex128, 16, 16)
 
 # Initialize the chips according to the IEEE 802.15.4-2006 Standard (§6.5.2.3)
 # instead of bits, use constellation points (0,1) -> (-1,1), i->real, q->imag
-tmp_chips[:,1] = complex(2.0*[1,0,1,0,1,0,0,1,0,0,0,1,0,1,1,1].-1, 2.0*[1,1,0,1,1,0,0,1,1,1,0,0,0,0,1,0].-1)
+tmp_chips[:,1] = complex(2.0*[1,0,1,0,1,0,0,1,0,0,0,1,0,1,1,1].-1,
+                         2.0*[1,1,0,1,1,0,0,1,1,1,0,0,0,0,1,0].-1)
 tmp_chips[:,9] = conj(tmp_chips[:,1])
 
 # the other chipping sequences are shifted versions of the two sequences above
 for sym_idx in 1:7
-	tmp_chips[:,sym_idx+1] = [tmp_chips[end-1:end, sym_idx]; tmp_chips[1:end-2, sym_idx]]
+	tmp_chips[:,sym_idx+1] = [tmp_chips[end-1:end, sym_idx];
+	                          tmp_chips[1:end-2,   sym_idx]]
 	tmp_chips[:,sym_idx+9] = conj(tmp_chips[:,sym_idx+1])
 end
 
@@ -40,12 +42,20 @@ const CHIPSEQ_MAPPING = tmp_chips
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 
-function Λu(β::Vector{Complex128}, 𝜑_range::Vector{Float64}, τ::Float64)
-	complex(Λu_i(β, 𝜑_range, τ), Λu_q(β, 𝜑_range, τ))
+function Λu(
+      β::AbstractVector{Complex128},
+      𝜑_range::AbstractVector{Float64},
+      τ::Float64)
+
+   complex(Λu_i(β, 𝜑_range, τ), Λu_q(β, 𝜑_range, τ))
 end
 # -----------------------------------------------------------------------------
 
-function Λu_i(β::Vector{Complex128}, 𝜑_range::Vector{Float64}, τ::Float64)
+function Λu_i(
+      β::AbstractVector{Complex128},
+      𝜑_range::AbstractVector{Float64},
+      τ::Float64)
+
 	𝜑_p = (π/2T)τ
 	τ_i_, τ_q_ = mod(τ, 2T),       mod((τ+T), 2T)
 	k_i,  k_q  = floor(Int, τ/2T), floor(Int, (τ+T)/2T)
@@ -54,11 +64,15 @@ function Λu_i(β::Vector{Complex128}, 𝜑_range::Vector{Float64}, τ::Float64)
 	βk_q, βkn_q = shift_indices(imag(β), k_q)
 
 	1/2T * (cos(𝜑_range').*(cos(𝜑_p)*(τ_i_*βkn_i .+ (2T-τ_i_)*βk_i).-sin(𝜑_p)*(2T/π) * (βkn_i.-βk_i))
-		  .-sin(𝜑_range').*(sin(𝜑_p)*(τ_q_*βkn_q .+ (2T-τ_q_)*βk_q).+cos(𝜑_p)*(2T/π) * (βkn_q.-βk_q)))
+		  .- sin(𝜑_range').*(sin(𝜑_p)*(τ_q_*βkn_q .+ (2T-τ_q_)*βk_q).+cos(𝜑_p)*(2T/π) * (βkn_q.-βk_q)))
 end
 # -----------------------------------------------------------------------------
 
-function Λu_q(β::Vector{Complex128}, 𝜑_range::Vector{Float64}, τ::Float64)
+function Λu_q(
+      β::AbstractVector{Complex128},
+      𝜑_range::AbstractVector{Float64},
+      τ::Float64)
+
 	𝜑_p = (π/2T)τ
 	τ_q_, τ_i_ = mod(τ, 2T),       mod((τ-T), 2T)
 	k_q,  k_i  = floor(Int, τ/2T), floor(Int, (τ-T)/2T)
@@ -67,12 +81,15 @@ function Λu_q(β::Vector{Complex128}, 𝜑_range::Vector{Float64}, τ::Float64)
 	βk_q, βkn_q = shift_indices(imag(β), k_q)
 
 	1/2T * (cos(𝜑_range').*(cos(𝜑_p)*(τ_q_*βkn_q .+ (2T-τ_q_)*βk_q).-sin(𝜑_p)*(2T/π) * (βkn_q.-βk_q))
-		  .-sin(𝜑_range').*(sin(𝜑_p)*(τ_i_*βkn_i .+ (2T-τ_i_)*βk_i).+cos(𝜑_p)*(2T/π) * (βkn_i.-βk_i)))
+		  .- sin(𝜑_range').*(sin(𝜑_p)*(τ_i_*βkn_i .+ (2T-τ_i_)*βk_i).+cos(𝜑_p)*(2T/π) * (βkn_i.-βk_i)))
 end
 # -----------------------------------------------------------------------------
 
-function shift_indices(X::Vector{Float64}, k::Int)
-	if k > 0
+function shift_indices(
+      X::AbstractVector{Float64},
+      k::Int)
+
+   if k > 0
 		Xk  = [zeros(k);   X[1:end-k]]
 		Xkn = [zeros(k+1); X[1:end-k-1]]
 	elseif k < 0
@@ -91,7 +108,10 @@ end
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 
-function map_chips!(chipseq::Vector{Complex128}, syms::Vector{Int})
+function map_chips!(
+      chipseq::AbstractVector{Complex128},
+      syms::AbstractVector{Int})
+
 	for (idx, sym) in enumerate(syms)
 		chipseq[1+16(idx-1):16idx] = CHIPSEQ_MAPPING[:,sym]
 	end
@@ -103,7 +123,10 @@ end
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 
-function detect_syms_corr!(recv_syms::Vector{Int}, recv_chips::Vector{Complex128})
+function detect_syms_corr!(
+      recv_syms::AbstractVector{Int},
+      recv_chips::AbstractVector{Complex128})
+
 	if length(recv_chips) % 16 ≠ 0
 		throw(DimensionMismatch("Input recv_chips contains an incomplete chipping sequence (<16 chips)!"))
 	end
@@ -127,7 +150,10 @@ end
 #	real(sum(a.*conj(v), 1))'
 #end
 
-@inline function sym_correlate!(result::Vector{Complex128}, chipseq::Vector{Complex128})
+@inline function sym_correlate!(
+      result::AbstractVector{Complex128},
+      chipseq::AbstractVector{Complex128})
+
 	for sym in 1:16
 		@inbounds result[sym] = 0
 
@@ -146,7 +172,9 @@ end
 #	return rand(best_syms)
 #end
 
-@inline function sym_bestmatch(sym_corrs::Vector{Float64})
+@inline function sym_bestmatch(
+      sym_corrs::AbstractVector{Float64})
+
 	best_syms = Int[]
 	best_corr = 0.0
 
@@ -163,5 +191,5 @@ end
 end
 # -----------------------------------------------------------------------------
 
-
 end
+

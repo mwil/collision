@@ -23,8 +23,9 @@ using LaTeXStrings
 function main()
 	if length(ARGS) == 0
 		# use the newest .npz file in the data directory for plotting
-		do_plot(joinpath("data", sort(readdir("data"),
-			by=(x)->splitext(x)[end]==".npz"?mtime(joinpath("data", x)):0.0)[end]))
+		do_plot(joinpath("data",
+		        sort(readdir("data"),
+			          by=(x)->splitext(x)[end]==".npz"?mtime(joinpath("data", x)):0.0)[end]))
 	else
 		for filename in ARGS
 			if splitext(filename)[end] == ".npz"
@@ -45,11 +46,14 @@ function do_plot(filename::String)
 
 	plt.clf()
 	plt.grid()
+
 	println(PSR_U[1:64:end,1:64:end])
+
 	Cf = plt.contourf(τ_range, 𝜑_range/π, PSR_U, levels=(-80:10:10), origin="lower")
 	#Cf = plt.contourf(τ_range, 𝜑_range/π, PSR_U, levels=(-10:3), origin="lower")
 	#plt.contour(Cf, colors=("r","r","w"), linewidths=(0., 0.75, 1.0), origin="lower", hold="on")
-	plt.colorbar(Cf)
+
+plt.colorbar(Cf)
 
 	plt.xlabel(L"Time offset $\tau$ ($/T$)", labelpad=2)
 	plt.ylabel(L"Carrier phase offset $\varphi_c$ ($/\pi$)", labelpad=0)

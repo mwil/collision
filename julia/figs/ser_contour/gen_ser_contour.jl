@@ -56,19 +56,34 @@ function do_gen(content::String, decision::String; SIR=-20.0)
 	SER_U = dzeros(length(𝜑_range), length(τ_range))
 
 	@sync @parallel for i=1:length(workers())
-		calcSER!(SER_S, SER_U, content, decision, τ_range, 𝜑_range, As=1.0, Au=Au, nsyms=nsyms)
+		calcSER!(SER_S, SER_U,
+		         content, decision, τ_range, 𝜑_range,
+		         As=1.0, Au=Au, nsyms=nsyms)
 	end
 
-	NPZ.npzwrite("data/serc_$(content)_$(decision)_SIR_$(@sprintf("%+03i", round(Int, SIR))).npz",
-				 Dict("SER_S"=>convert(Array, SER_S), "SER_U"=>convert(Array, SER_U),
-					  "tau_range"=>τ_range, "phi_range"=>𝜑_range,
-					  "As"=>1.0, "Au"=>Au, "nsyms"=>nsyms, "nsteps"=>nsteps))
+	NPZ.npzwrite(
+	   "data/serc_$(content)_$(decision)_SIR_$(@sprintf("%+03i", round(Int, SIR))).npz",
+		Dict(
+		   "SER_S"=>convert(Array, SER_S),
+		   "SER_U"=>convert(Array, SER_U),
+			"tau_range"=>convert(Array, τ_range),
+			"phi_range"=>convert(Array, 𝜑_range),
+			"As"=>1.0,
+			"Au"=>Au,
+			"nsyms"=>nsyms,
+			"nsteps"=>nsteps))
 end
 
 # -----------------------------------------------------------------------------
 
-@everywhere function calcSER!(dSER_S::DArray, dSER_U::DArray, content::String, decision::String,
-		τ_range::Vector{Float64}, 𝜑_range::Vector{Float64}; As=1.0, Au=√100, nsyms=2^10, nsteps=2^8)
+@everywhere function calcSER!(
+      dSER_S::DArray,
+      dSER_U::DArray,
+      content::String,
+      decision::String,
+		τ_range::AbstractVector{Float64},
+		𝜑_range::AbstractVector{Float64}
+		; As=1.0, Au=√100, nsyms=2^10, nsteps=2^8)
 
 	if !(content in ("same", "unif"))
 		throw(ArgumentError("Content must be in {same, unif}"))
@@ -91,7 +106,7 @@ end
 
 
 	for (τ_idx, τ) in enumerate(τ_range[lidx[2]])
-		println("τ = ", @sprintf("% .3f", τ), ". Worker progress: ", @sprintf("%6.2f", 100.τ_idx/length(lidx[2])), "%")
+		println("τ = ", @sprintf("% .3f", τ), ". Worker progress: ", @sprintf("%6.2f", 100.0τ_idx/length(lidx[2])), "%")
 
 		if content == "same"
 			rand!(α_send_syms, 1:16)
@@ -124,4 +139,5 @@ end
 
 # -----------------------------------------------------------------------------
 
-main_vid()
+main()
+

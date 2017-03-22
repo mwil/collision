@@ -47,21 +47,36 @@ function do_gen(content::String, decision::String)
 	PRR_U = dzeros(length(Au_range), length(τ_range))
 
 	@sync @parallel for i=1:length(workers())
-		calcPRR!(PRR_S, PRR_U, content, decision, τ_range, Au_range, 𝜑_range,
-				 As=1.0, nsyms=nsyms, nsteps=nsteps, pktlen=pktlen)
+		calcPRR!(PRR_S, PRR_U,
+		   content, decision, τ_range, Au_range, 𝜑_range,
+			As=1.0, nsyms=nsyms, nsteps=nsteps, pktlen=pktlen)
 	end
 
-	NPZ.npzwrite(joinpath("data", "scAu_$(content)_$(decision).npz"),
-				 Dict("PRR_S"=>convert(Array, PRR_S), "PRR_U"=>convert(Array, PRR_U),
-					  "tau_range"=>τ_range, "phi_range"=>𝜑_range, "Au_range"=>Au_range,
-					  "As"=>1.0, "nsyms"=>nsyms, "nsteps"=>nsteps, "pktlen"=>pktlen))
+	NPZ.npzwrite(
+	   joinpath("data", "scAu_$(content)_$(decision).npz"),
+		Dict(
+		   "PRR_S"=>convert(Array, PRR_S),
+		   "PRR_U"=>convert(Array, PRR_U),
+			"tau_range"=>convert(Array, τ_range),
+			"phi_range"=>convert(Array, 𝜑_range),
+			"Au_range"=>convert(Array, Au_range),
+			"As"=>1.0,
+			"nsyms"=>nsyms,
+			"nsteps"=>nsteps,
+			"pktlen"=>pktlen))
 end
 
 # -----------------------------------------------------------------------------
 
-@everywhere function calcPRR!(dPRR_S::DArray, dPRR_U::DArray, content::String, decision::String,
-		τ_range::Vector{Float64}, Au_range::Vector{Float64}, 𝜑_range::Vector{Float64};
-		As=1.0, nsyms=2^8, nsteps=2^7, pktlen=8)
+@everywhere function calcPRR!(
+      dPRR_S::DArray,
+      dPRR_U::DArray,
+      content::String,
+      decision::String,
+      τ_range::AbstractVector{Float64},
+      Au_range::AbstractVector{Float64},
+      𝜑_range::AbstractVector{Float64}
+      ; As=1.0, nsyms=2^8, nsteps=2^7, pktlen=8)
 
 	if !(content in ("same", "unif"))
 		throw(ArgumentError("Content must be in {same, unif}"))
@@ -75,16 +90,15 @@ end
 
 	lidx = localindexes(dPRR_U)
 
-	α_send_syms = zeros(Int, nsyms)
+   α_send_syms = zeros(Int, nsyms)
 	β_send_syms = zeros(Int, nsyms)
 	α_send_chips = zeros(Complex128, 16*nsyms)
 	β_send_chips = zeros(Complex128, 16*nsyms)
 
-	ser_s = zeros(Float64, length(lidx[1]))
-	ser_u = zeros(Float64, length(lidx[1]))
+	ser_s = zeros(Float64, nsteps)
+	ser_u = zeros(Float64, nsteps)
 
 	recv_syms = zeros(Int, nsyms)
-
 
 	for (τ_idx, τ) in enumerate(τ_range[lidx[2]])
 		tic()
@@ -121,7 +135,7 @@ end
 		end
 
 		toc()
-		println("τ = ", @sprintf("% .3f", τ), ". Worker progress: ", @sprintf("%6.2f", 100.τ_idx/length(lidx[2])), "%")
+		println("τ = ", @sprintf("% .3f", τ), ". Worker progress: ", @sprintf("%6.2f", 100.0τ_idx/length(lidx[2])), "%")
 	end
 end
 
